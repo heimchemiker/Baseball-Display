@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+Scoreboard Steuerung
+</title>
+
+/style.css
+
+</head>
+
+<body>
+
+<h1>
+Baseball Scoreboard
+</h1>
+
+<nav>
+
+/
+Vorschau
+</a>
+
+/config.html
+Konfiguration
+</a>
+
+</nav>
+
+<div class="container">
+
+<h2>
+At Bat
+</h2>
+
+<input
+    id="batter"
+    type="number"
+    min="0"
+    max="99">
+
+<h2>
+Balls
+</h2>
+
+<div class="buttons">
+
+<button onclick="setBalls(0)">
+0
+</button>
+
+<button onclick="changeBalls(-1)">
+-
+</button>
+
+<button onclick="changeBalls(1)">
++
+</button>
+
+</div>
+
+<h2>
+Strikes
+</h2>
+
+<div class="buttons">
+
+<button onclick="setStrikes(0)">
+0
+</button>
+
+<button onclick="changeStrikes(-1)">
+-
+</button>
+
+<button onclick="changeStrikes(1)">
++
+</button>
+
+</div>
+
+<h2>
+Outs
+</h2>
+
+<div class="buttons">
+
+<button onclick="setOuts(0)">
+0
+</button>
+
+<button onclick="changeOuts(-1)">
+-
+</button>
+
+<button onclick="changeOuts(1)">
++
+</button>
+
+</div>
+
+<div id="teamA"></div>
+
+<div id="teamB"></div>
+
+</div>
+
+/app.jsscript>
+/control.jsscript>
+
+</body>
+</html>
