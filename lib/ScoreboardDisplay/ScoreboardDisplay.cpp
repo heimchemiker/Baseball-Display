@@ -1,0 +1,9 @@
+#define BATTER_DISPLAY 0
+
+#define BALLS_START 14
+
+#define STRIKES_START 17
+
+#define OUTS_START 19
+
+#define CLOCK_START 21
