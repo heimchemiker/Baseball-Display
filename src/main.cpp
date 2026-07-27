@@ -6,6 +6,9 @@
 #include "ScoreboardDisplay.h"
 #include "RestApi.h"
 #include "StateSerializer.h"
+#include "MqttManager.h"
+
+MqttManager mqttManager;
 
 
 AsyncWebServer server(80);
@@ -23,10 +26,13 @@ ScoreboardDisplay scoreboard(
 void setup()
 {
     Serial.begin(115200);
-
     scoreboard.begin();
-
     websocketManager.begin(server);
-
     server.begin();
+    mqttManager.begin();    
+}
+
+void loop()
+{
+    mqttManager.loop();
 }
