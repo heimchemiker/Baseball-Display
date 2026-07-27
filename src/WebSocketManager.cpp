@@ -1,4 +1,5 @@
 #include "WebSocketManager.h"
+#include getStateJson();
 
 extern String getStateJson();
 
