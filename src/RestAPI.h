@@ -1,7 +1,12 @@
 #pragma once
 
+#include <ESPAsyncWebServer.h>
+
 class RestApi
 {
 public:
-    void begin();
+
+    void begin(
+        AsyncWebServer& server
+    );
 };
