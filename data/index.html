@@ -11,11 +11,18 @@
 /style.css
 
 <style>
-
+:root
+{
+    --bg-color:#111111;
+    --panel-color:#000000;
+    --text-color:#ffffff;
+    --segment-off:#220000;
+    --segment-border:#333333;    
+}
 body
 {
-    background:#111;
-    color:white;
+    background:var(--bg-color);
+    color:var(--text-color);
     font-family:Arial,sans-serif;
 }
 
@@ -23,7 +30,7 @@ svg
 {
     width:100%;
     height:auto;
-    background:black;
+    background:var(--panel-color);
     border-radius:10px;
 }
 
