@@ -1,0 +1,18 @@
+{
+  "theme": "dark",
+
+  "colors": {
+    "global": "#ff0000",
+
+    "teamA": "#ff0000",
+    "teamB": "#00ff00",
+
+    "clock": "#ffffff",
+
+    "balls": "#00ff00",
+    "strikes": "#ffff00",
+    "outs": "#ff0000",
+
+    "currentInning": "#ffffff"
+  }
+}
