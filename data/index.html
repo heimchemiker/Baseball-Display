@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Baseball Scoreboard</title>
+
+/style.css
+
+<style>
+
+body
+{
+    background:#111;
+    color:white;
+    font-family:Arial,sans-serif;
+}
+
+svg
+{
+    width:100%;
+    height:auto;
+    background:black;
+    border-radius:10px;
+}
+
+.off
+{
+    fill:#220000;
+}
+
+.segment
+{
+    transition:fill .2s;
+}
+
+.menu
+{
+    margin-bottom:20px;
+}
+
+.menu a
+{
+    margin-right:20px;
+    color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="menu">
+    /control.htmlSteuerung</a>
+    /config.htmlKonfiguration</a>
+</div>
+
+<svg id="board"
+     viewBox="0 0 2200 800">
+
+</svg>
+
+<script>
+
+const svg =
+    document.getElementById("board");
+
+function segment(
+    x,
+    y,
+    width,
+    height,
+    id
+)
+{
+    return `
+    <rect
+        id="${id}"
+        class="segment off"
+        x="${x}"
+        y="${y}"
+        width="${width}"
+        height="${height}"
+        rx="4"
+    />
+    `;
+}
+
+function createDigit(
+    x,
+    y,
+    scale,
+    prefix
+)
+{
+    let s = scale;
+
+    return `
+
+${segment(x+10*s,y+0*s,40*s,8*s,prefix+"_1")}
+${segment(x+50*s,y+10*s,8*s,40*s,prefix+"_2")}
+${segment(x+50*s,y+60*s,8*s,40*s,prefix+"_3")}
+${segment(x+10*s,y+100*s,40*s,8*s,prefix+"_4")}
+${segment(x+0*s,y+60*s,8*s,40*s,prefix+"_5")}
+${segment(x+10*s,y+50*s,40*s,8*s,prefix+"_6")}
+${segment(x+0*s,y+10*s,8*s,40*s,prefix+"_7")}
+
+`;
+}
+
+const digits = [];
+
+function addDigit(x,y,s,id)
+{
+    svg.insertAdjacentHTML(
+        "beforeend",
+        createDigit(x,y,s,id)
+    );
+
+    digits.push(id);
+}
+
+svg.innerHTML += `
+<text x="40" y="40" fill="white">AT BAT</text>
+`;
+
+addDigit(40,60,1.2,"bat1");
+addDigit(120,60,1.2,"bat2");
+
+svg.innerHTML += `
+<text x="320" y="40" fill="white">BALLS</text>
+`;
+
+for(let i=0;i<3;i++)
+{
+    svg.innerHTML += `
+    <circle
+       id="ball${i}"
+       cx="${340+i*30}"
+       cy="120"
+       r="10"
+       fill="#330000"
+    />
+    `;
+}
+
+svg.innerHTML += `
+<text x="450" y="40" fill="white">STRIKES</text>
+`;
+
+for(let i=0;i<2;i++)
+{
+    svg.innerHTML += `
+    <circle
+       id="strike${i}"
+       cx="${480+i*30}"
+       cy="120"
+       r="10"
+       fill="#330000"
+    />
+    `;
+}
+
+svg.innerHTML += `
+<text x="600" y="40" fill="white">
+OUTS
+</text>
+`;
+
+for(let i=0;i<2;i++)
+{
+    svg.innerHTML += `
+    <circle
+       id="out${i}"
+       cx="${620+i*30}"
+       cy="120"
+       r="10"
+       fill="#330000"
+    />
+    `;
+}
+
+svg.innerHTML += `
+<text x="760" y="40" fill="white">
+TIME
+</text>
+`;
+
+addDigit(760,60,1.2,"time1");
+addDigit(840,60,1.2,"time2");
+addDigit(940,60,1.2,"time3");
+addDigit(1020,60,1.2,"time4");
+
+function createRow(prefix,y)
+{
+    let x=160;
+
+    svg.innerHTML+=`
+    <text
+        x="20"
+        y="${y+50}"
+        fill="white"
+        font-size="28">
+        ${prefix}
+    </text>
+    `;
+
+    for(let inning=1;inning<=10;inning++)
+    {
+        addDigit(
+            x,
+            y,
+            0.9,
+            `${prefix}_i${inning}_a`
+        );
+
+        addDigit(
+            x+55,
+            y,
+            0.9,
+            `${prefix}_i${inning}_b`
+        );
+
+        x += 110;
+    }
+
+    addDigit(x+20,y,0.9,`${prefix}_runs_a`);
+    addDigit(x+75,y,0.9,`${prefix}_runs_b`);
+
+    addDigit(x+180,y,0.9,`${prefix}_hits_a`);
+    addDigit(x+235,y,0.9,`${prefix}_hits_b`);
+
+    addDigit(x+340,y,0.9,`${prefix}_err_a`);
+    addDigit(x+395,y,0.9,`${prefix}_err_b`);
+}
+
+createRow("A",300);
+createRow("B",520);
+
+const digitMap =
+[
+ [1,1,1,0,1,1,1],
+ [0,0,1,0,0,0,1],
+ [0,1,1,1,1,1,0],
+ [0,1,1,1,0,1,1],
+ [1,0,1,1,0,0,1],
+ [1,1,0,1,0,1,1],
+ [1,1,0,1,1,1,1],
+ [0,1,1,0,0,0,1],
+ [1,1,1,1,1,1,1],
+ [1,1,1,1,0,1,1]
+];
+
+function drawDigit(id,digit,color)
+{
+    for(let i=1;i<=7;i++)
+    {
+        let seg =
+            document.getElementById(
+                `${id}_${i}`
+            );
+
+        if(!seg)
+            continue;
+
+        seg.style.fill =
+            digitMap[digit][i-1]
+                ? color
+                : "#220000";
+    }
+}
+
+function drawNumber(
+    prefix,
+    value,
+    digits,
+    color
+)
+{
+    value =
+        value.toString()
+             .padStart(
+                 digits,
+                 "0"
+             );
+
+    for(let i=0;i<digits;i++)
+    {
+        drawDigit(
+            prefix+(i+1),
+            parseInt(value[i]),
+            color
+        );
+    }
+}
+
+async function loadState()
+{
+    try
+    {
+        const r =
+            await fetch("/api/state");
+
+        const d =
+            await r.json();
+
+        drawNumber(
+            "bat",
+            d.atBat,
+            2,
+            d.colors?.global || "#ff0000"
+        );
+
+        let time =
+            new Date();
+
+        drawNumber(
+            "time",
+            time.getHours()*100+
+            time.getMinutes(),
+            4,
+            d.colors?.clock ||
+            "#ffffff"
+        );
+
+        for(let i=0;i<3;i++)
+        {
+            document
+            .getElementById(
+                "ball"+i
+            )
+            .setAttribute(
+                "fill",
+                i<d.balls
+                ? "#00ff00"
+                : "#330000"
+            );
+        }
+
+        for(let i=0;i<2;i++)
+        {
+            document
+            .getElementById(
+                "strike"+i
+            )
+            .setAttribute(
+                "fill",
+                i<d.strikes
+                ? "#ffff00"
+                : "#330000"
+            );
+        }
+
+        for(let i=0;i<2;i++)
+        {
+            document
+            .getElementById(
+                "out"+i
+            )
+            .setAttribute(
+                "fill",
+                i<d.outs
+                ? "#ff0000"
+                : "#330000"
+            );
+        }
+    }
+    catch(err)
+    {
+        console.log(err);
+    }
+}
+
+loadState();
+
+setInterval(
+    loadState,
+    1000
+);
+
+</script>
+
+</body>
+</html>
