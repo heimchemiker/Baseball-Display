@@ -1,7 +1,5 @@
 #include "StateSerializer.h"
-
 #include <ArduinoJson.h>
-
 #include "ScoreboardDisplay.h"
 
 extern ScoreboardDisplay scoreboard;
