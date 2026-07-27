@@ -221,16 +221,6 @@ function createInningControls(
     div.innerHTML = html;
 }
 
-createInningControls(
-    "teamA",
-    "A"
-);
-
-createInningControls(
-    "teamB",
-    "B"
-);
-
 function updateInning(
     team,
     inning,
