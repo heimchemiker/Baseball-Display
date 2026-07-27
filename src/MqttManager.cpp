@@ -1,3 +1,6 @@
+extern ScoreboardDisplay scoreboard;
+extern WebSocketManager websocketManager;
+
 baseball/balls/set
 
 baseball/strikes/set
