@@ -2,11 +2,12 @@
 
 #include <ArduinoJson.h>
 #include <WiFi.h>
-
 #include "ScoreboardDisplay.h"
 #include "ConfigManager.h"
 #include "MqttManager.h"
+#include "BrightnessManager.h"
 
+extern BrightnessManager brightnessManager;
 extern ScoreboardDisplay scoreboard;
 extern ConfigManager configManager;
 extern MqttManager mqttManager;
@@ -168,12 +169,14 @@ String getStateJson()
         doc["brightness"]
             .to<JsonObject>();
 
-    brightness["sensorEnabled"] =
-        configManager.config()
-            .brightnessSensor;
+    brightness["enabled"] =
+        brightnessManager.enabled();
 
-    brightness["current"] =
-        configManager.currentBrightness();
+    brightness["lux"] =
+        brightnessManager.currentLux();
+    
+    brightness["value"] =
+        brightnessManager.currentBrightness();
 
     //
     // Zeitquelle
