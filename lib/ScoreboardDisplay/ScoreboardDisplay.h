@@ -6,6 +6,10 @@
 #include "SevenSegmentLED.h"
 #include "ScoreboardState.h"
 
+uint8_t getHour() const;
+uint8_t getMinute() const;
+uint8_t getCurrentInning() const;
+
 class ScoreboardDisplay
 {
 public:
