@@ -7,6 +7,7 @@
 #include "RestApi.h"
 #include "StateSerializer.h"
 #include "MqttManager.h"
+#include "BrightnessManager.h"
 
 MqttManager mqttManager;
 
