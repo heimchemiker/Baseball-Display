@@ -115,3 +115,196 @@ void WebSocketManager::broadcastState()
         getStateJson()
     );
 }
+
+void WebSocketManager::handleMessage(
+    AsyncWebSocketClient* client,
+    const String& message)
+{
+    JsonDocument doc;
+
+    auto result =
+        deserializeJson(
+            doc,
+            message
+        );
+
+    if(result)
+    {
+        client->text(
+            "{\"error\":\"invalid json\"}"
+        );
+        return;
+    }
+
+    auto& state =
+        scoreboard.state();
+
+    if(doc["atBat"].is<int>())
+    {
+        state.batter =
+            constrain(
+                doc["atBat"],
+                0,
+                99
+            );
+    }
+
+    if(doc["balls"].is<int>())
+    {
+        state.balls =
+            constrain(
+                doc["balls"],
+                0,
+                3
+            );
+    }
+
+    if(doc["strikes"].is<int>())
+    {
+        state.strikes =
+            constrain(
+                doc["strikes"],
+                0,
+                2
+            );
+    }
+
+    if(doc["outs"].is<int>())
+    {
+        state.outs =
+            constrain(
+                doc["outs"],
+                0,
+                2
+            );
+    }
+
+    if(doc["hitsA"].is<int>())
+    {
+        state.hitsA =
+            constrain(
+                doc["hitsA"],
+                0,
+                99
+            );
+    }
+
+    if(doc["hitsB"].is<int>())
+    {
+        state.hitsB =
+            constrain(
+                doc["hitsB"],
+                0,
+                99
+            );
+    }
+
+    if(doc["errorsA"].is<int>())
+    {
+        state.errorsA =
+            constrain(
+                doc["errorsA"],
+                0,
+                99
+            );
+    }
+
+    if(doc["errorsB"].is<int>())
+    {
+        state.errorsB =
+            constrain(
+                doc["errorsB"],
+                0,
+                99
+            );
+    }
+
+    if(doc["currentInning"].is<int>())
+    {
+        scoreboard.setCurrentInning(
+            constrain(
+                doc["currentInning"],
+                1,
+                10
+            )
+        );
+    }
+
+    if(doc["inningsA"].is<JsonArray>())
+    {
+        JsonArray arr =
+            doc["inningsA"];
+
+        for(uint8_t i = 0;
+            i < arr.size() && i < 10;
+            i++)
+        {
+            state.inningsA[i] =
+                constrain(
+                    arr[i].as<int>(),
+                    0,
+                    99
+                );
+        }
+    }
+
+    if(doc["inningsB"].is<JsonArray>())
+    {
+        JsonArray arr =
+            doc["inningsB"];
+
+        for(uint8_t i = 0;
+            i < arr.size() && i < 10;
+            i++)
+        {
+            state.inningsB[i] =
+                constrain(
+                    arr[i].as<int>(),
+                    0,
+                    99
+                );
+        }
+    }
+
+    if(doc["cmd"].is<String>())
+    {
+        String cmd =
+            doc["cmd"];
+
+        if(cmd == "resetCount")
+        {
+            state.balls = 0;
+            state.strikes = 0;
+            state.outs = 0;
+        }
+
+        if(cmd == "clearGame")
+        {
+            memset(
+                state.inningsA,
+                0,
+                sizeof(state.inningsA)
+            );
+
+            memset(
+                state.inningsB,
+                0,
+                sizeof(state.inningsB)
+            );
+
+            state.hitsA = 0;
+            state.hitsB = 0;
+
+            state.errorsA = 0;
+            state.errorsB = 0;
+
+            state.balls = 0;
+            state.strikes = 0;
+            state.outs = 0;
+        }
+    }
+
+    scoreboard.render();
+
+    broadcastState();
+}
