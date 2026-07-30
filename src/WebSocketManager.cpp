@@ -6,6 +6,7 @@
 #include "ScoreboardDisplay.h"
 
 extern ScoreboardDisplay scoreboard;
+extern MqttManager mqttManager;
 
 WebSocketManager::WebSocketManager()
 :
@@ -305,6 +306,6 @@ void WebSocketManager::handleMessage(
     }
 
     scoreboard.render();
-
     broadcastState();
+    mqttManager.publishState();
 }
