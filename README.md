@@ -1,4 +1,7 @@
-Unterstützte JSON-Updates
+Dies soll ein Baseball Scoreboard werden, welches für die Darfstellung 7-segmentanzeigen nutzt, welche jedoch durch WS2812/SK812 LED beleuchtet werden. Hierzu entspricht das linke obere Segment LED1, das obere Segment LED2, das rechte obere Segment LED3, das mittlere Segment LED4, das rechte untere Segment LED5, das untere Segment LED6, und das rechte untere Segment LED7.
+Für eine einfachere Verkabelung wird das dreizeilige Display durch 3 LED-Streifen beleuchtet.
+
+#Unterstützte JSON-Updates
 Balls setzen:
 JSON
 {
