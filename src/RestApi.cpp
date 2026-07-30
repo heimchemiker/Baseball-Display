@@ -12,6 +12,7 @@
 extern ScoreboardDisplay scoreboard;
 extern ConfigManager configManager;
 extern WebSocketManager websocketManager;
+extern WifiManager wifiManager;
 
 void RestApi::begin(
     AsyncWebServer& server)
@@ -374,7 +375,7 @@ void RestApi::begin(
             request->send(
                 200,
                 "application/json",
-                json
+                wifiManager.scanNetworksJson()
             );
         });
 }
