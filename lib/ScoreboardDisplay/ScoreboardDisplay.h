@@ -19,12 +19,10 @@ public:
         Adafruit_NeoPixel* teamAStrip,
         Adafruit_NeoPixel* teamBStrip
     );
-
-    void begin();
-
-    void render();
-
     ScoreboardState& state();
+    
+    void begin();
+    void render();
 
     void setClock(
         uint8_t hour,
