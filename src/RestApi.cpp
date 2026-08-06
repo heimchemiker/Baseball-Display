@@ -1,25 +1,26 @@
 #include "RestApi.h"
 
+#include <Arduino.h>
 #include <ArduinoJson.h>
-#include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 
-#include "StateSerializer.h"
-#include "ScoreboardDisplay.h"
 #include "ConfigManager.h"
+#include "ScoreboardDisplay.h"
+#include "StateSerializer.h"
 #include "WebSocketManager.h"
+#include "WifiManager.h"
 
-extern ScoreboardDisplay scoreboard;
 extern ConfigManager configManager;
+extern ScoreboardDisplay scoreboard;
 extern WebSocketManager websocketManager;
 extern WifiManager wifiManager;
 
 void RestApi::begin(
     AsyncWebServer& server)
 {
-    /*
-     * GET /api/state
-     */
+    //
+    // GET /api/state
+    //
 
     server.on(
         "/api/state",
@@ -31,19 +32,23 @@ void RestApi::begin(
                 "application/json",
                 getStateJson()
             );
-        });
+        }
+    );
 
-    /*
-     * POST /api/state
-     */
+    //
+    // POST /api/state
+    //
 
     server.on(
         "/api/state",
         HTTP_POST,
+
         AsyncWebServerRequest* request
         {
         },
+
         nullptr,
+
         AsyncWebServerRequest* request,
            uint8_t* data,
            size_t len,
@@ -52,19 +57,21 @@ void RestApi::begin(
         {
             JsonDocument doc;
 
-            DeserializationError err =
+            DeserializationError error =
                 deserializeJson(
                     doc,
                     data,
-                    len);
+                    len
+                );
 
-            if(err)
+            if(error)
             {
                 request->send(
                     400,
                     "application/json",
-                    "{\"error\":\"invalid json\"}"
+                    "{\"success\":false,\"error\":\"invalid json\"}"
                 );
+
                 return;
             }
 
@@ -72,93 +79,137 @@ void RestApi::begin(
                 scoreboard.state();
 
             if(doc["atBat"].is<int>())
+            {
                 state.batter =
-                    doc["atBat"];
+                    constrain(
+                        doc["atBat"].as<int>(),
+                        0,
+                        99
+                    );
+            }
 
             if(doc["balls"].is<int>())
+            {
                 state.balls =
                     constrain(
-                        doc["balls"],
+                        doc["balls"].as<int>(),
                         0,
-                        3);
+                        3
+                    );
+            }
 
             if(doc["strikes"].is<int>())
+            {
                 state.strikes =
                     constrain(
-                        doc["strikes"],
+                        doc["strikes"].as<int>(),
                         0,
-                        2);
+                        2
+                    );
+            }
 
             if(doc["outs"].is<int>())
+            {
                 state.outs =
                     constrain(
-                        doc["outs"],
+                        doc["outs"].as<int>(),
                         0,
-                        2);
+                        2
+                    );
+            }
 
             if(doc["hitsA"].is<int>())
+            {
                 state.hitsA =
-                    doc["hitsA"];
+                    constrain(
+                        doc["hitsA"].as<int>(),
+                        0,
+                        99
+                    );
+            }
 
             if(doc["hitsB"].is<int>())
+            {
                 state.hitsB =
-                    doc["hitsB"];
+                    constrain(
+                        doc["hitsB"].as<int>(),
+                        0,
+                        99
+                    );
+            }
 
             if(doc["errorsA"].is<int>())
+            {
                 state.errorsA =
-                    doc["errorsA"];
+                    constrain(
+                        doc["errorsA"].as<int>(),
+                        0,
+                        99
+                    );
+            }
 
             if(doc["errorsB"].is<int>())
+            {
                 state.errorsB =
-                    doc["errorsB"];
+                    constrain(
+                        doc["errorsB"].as<int>(),
+                        0,
+                        99
+                    );
+            }
 
             if(doc["inningsA"].is<JsonArray>())
             {
                 JsonArray arr =
-                    doc["inningsA"];
+                    doc["inningsA"].as<JsonArray>();
 
                 for(size_t i = 0;
                     i < arr.size() && i < 10;
                     i++)
                 {
                     state.inningsA[i] =
-                        arr[i];
+                        constrain(
+                            arr[i].as<int>(),
+                            0,
+                            99
+                        );
                 }
             }
 
             if(doc["inningsB"].is<JsonArray>())
             {
                 JsonArray arr =
-                    doc["inningsB"];
+                    doc["inningsB"].as<JsonArray>();
 
                 for(size_t i = 0;
                     i < arr.size() && i < 10;
                     i++)
                 {
                     state.inningsB[i] =
-                        arr[i];
+                        constrain(
+                            arr[i].as<int>(),
+                            0,
+                            99
+                        );
                 }
             }
-
-            /*
-             * Einzelne Inning-Werte
-             */
 
             if(doc["team"].is<String>() &&
                doc["inning"].is<int>() &&
                doc["value"].is<int>())
             {
                 String team =
-                    doc["team"];
+                    doc["team"].as<String>();
 
                 int inning =
-                    doc["inning"];
+                    doc["inning"].as<int>();
 
                 int value =
                     constrain(
-                        doc["value"],
+                        doc["value"].as<int>(),
                         0,
-                        99);
+                        99
+                    );
 
                 if(inning >= 0 &&
                    inning < 10)
@@ -177,66 +228,6 @@ void RestApi::begin(
                 }
             }
 
-            /*
-             * Hits / Errors +/- Updates
-             */
-
-            if(doc["team"].is<String>() &&
-               doc["stat"].is<String>() &&
-               doc["delta"].is<int>())
-            {
-                String team =
-                    doc["team"];
-
-                String stat =
-                    doc["stat"];
-
-                int delta =
-                    doc["delta"];
-
-                if(team == "A")
-                {
-                    if(stat == "hits")
-                    {
-                        state.hitsA =
-                            max(
-                                0,
-                                state.hitsA + delta
-                            );
-                    }
-
-                    if(stat == "errors")
-                    {
-                        state.errorsA =
-                            max(
-                                0,
-                                state.errorsA + delta
-                            );
-                    }
-                }
-
-                if(team == "B")
-                {
-                    if(stat == "hits")
-                    {
-                        state.hitsB =
-                            max(
-                                0,
-                                state.hitsB + delta
-                            );
-                    }
-
-                    if(stat == "errors")
-                    {
-                        state.errorsB =
-                            max(
-                                0,
-                                state.errorsB + delta
-                            );
-                    }
-                }
-            }
-
             scoreboard.render();
 
             websocketManager.broadcastState();
@@ -246,11 +237,12 @@ void RestApi::begin(
                 "application/json",
                 getStateJson()
             );
-        });
+        }
+    );
 
-    /*
-     * GET /api/config
-     */
+    //
+    // GET /api/config
+    //
 
     server.on(
         "/api/config",
@@ -262,35 +254,49 @@ void RestApi::begin(
                 "application/json",
                 configManager.toJson()
             );
-        });
+        }
+    );
 
-    /*
-     * POST /api/config
-     */
+    //
+    // POST /api/config
+    //
 
     server.on(
         "/api/config",
         HTTP_POST,
+
         AsyncWebServerRequest* request
         {
         },
+
         nullptr,
+
         AsyncWebServerRequest* request,
            uint8_t* data,
            size_t len,
            size_t index,
            size_t total
         {
-            bool result =
+            String payload;
+
+            payload.reserve(len);
+
+            for(size_t i = 0;
+                i < len;
+                i++)
+            {
+                payload +=
+                    (char)data[i];
+            }
+
+            bool success =
                 configManager.fromJson(
-                    (const char*)data
+                    payload
                 );
 
-            if(result)
+            if(success)
             {
                 configManager.save();
-
-                websocketManager.broadcastState();
 
                 request->send(
                     200,
@@ -306,11 +312,12 @@ void RestApi::begin(
                     "{\"success\":false}"
                 );
             }
-        });
+        }
+    );
 
-    /*
-     * POST /api/restart
-     */
+    //
+    // POST /api/restart
+    //
 
     server.on(
         "/api/restart",
@@ -323,59 +330,26 @@ void RestApi::begin(
                 "{\"restart\":true}"
             );
 
-            delay(1000);
+            delay(500);
 
             ESP.restart();
-        });
+        }
+    );
 
-    /*
-     * GET /api/wifi/scan
-     */
+    //
+    // GET /api/wifi/scan
+    //
 
     server.on(
         "/api/wifi/scan",
         HTTP_GET,
         AsyncWebServerRequest* request
         {
-            JsonDocument doc;
-
-            JsonArray networks =
-                doc.to<JsonArray>();
-
-            int count =
-                WiFi.scanNetworks();
-
-            for(int i = 0;
-                i < count;
-                i++)
-            {
-                JsonObject net =
-                    networks.add<JsonObject>();
-
-                net["ssid"] =
-                    WiFi.SSID(i);
-
-                net["rssi"] =
-                    WiFi.RSSI(i);
-
-                net["channel"] =
-                    WiFi.channel(i);
-
-                net["encryption"] =
-                    WiFi.encryptionType(i);
-            }
-
-            String json;
-
-            serializeJson(
-                doc,
-                json
-            );
-
             request->send(
                 200,
                 "application/json",
                 wifiManager.scanNetworksJson()
             );
-        });
+        }
+    );
 }
