@@ -16,16 +16,16 @@ public:
     bool connected() const;
 
     void publishState();
-
-private:
-
-    void reconnect();
-
+    
     void handleMessage(
         char* topic,
         byte* payload,
         unsigned int length
     );
+
+private:
+
+    void reconnect();
 
     void publishDiscovery();
 
