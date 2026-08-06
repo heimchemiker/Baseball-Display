@@ -1,5 +1,7 @@
 #include "MqttManager.h"
 
+#include <Arduino.h>
+#include <WiFi.h>
 #include <ArduinoJson.h>
 
 #include "ConfigManager.h"
@@ -71,7 +73,10 @@ void MqttManager::reconnect()
 
     String clientId =
         "BaseballScoreboard-" +
-        String((uint32_t)ESP.getEfuseMac(), HEX);
+        String(
+            (uint64_t)ESP.getEfuseMac(),
+            HEX
+        );
 
     bool success = false;
 
@@ -81,14 +86,24 @@ void MqttManager::reconnect()
             mqttClient.connect(
                 clientId.c_str(),
                 configManager.config().mqttUser.c_str(),
-                configManager.config().mqttPassword.c_str()
+                configManager.config().mqttPassword.c_str(),
+                "baseball/status",
+                0,
+                true,
+                "offline"
             );
     }
     else
     {
         success =
             mqttClient.connect(
-                clientId.c_str()
+                clientId.c_str(),
+                nullptr,
+                nullptr,
+                "baseball/status",
+                0,
+                true,
+                "offline"
             );
     }
 
@@ -97,21 +112,51 @@ void MqttManager::reconnect()
         return;
     }
 
-    mqttClient.subscribe("baseball/cmd");
+    mqttClient.publish(
+        "baseball/status",
+        "online",
+        true
+    );
 
-    mqttClient.subscribe("baseball/batter/set");
+    mqttClient.subscribe(
+        "baseball/cmd"
+    );
 
-    mqttClient.subscribe("baseball/balls/set");
-    mqttClient.subscribe("baseball/strikes/set");
-    mqttClient.subscribe("baseball/outs/set");
+    mqttClient.subscribe(
+        "baseball/batter/set"
+    );
 
-    mqttClient.subscribe("baseball/teama/hits/set");
-    mqttClient.subscribe("baseball/teama/errors/set");
+    mqttClient.subscribe(
+        "baseball/balls/set"
+    );
 
-    mqttClient.subscribe("baseball/teamb/hits/set");
-    mqttClient.subscribe("baseball/teamb/errors/set");
+    mqttClient.subscribe(
+        "baseball/strikes/set"
+    );
 
-    for(int inning = 1; inning <= 10; inning++)
+    mqttClient.subscribe(
+        "baseball/outs/set"
+    );
+
+    mqttClient.subscribe(
+        "baseball/teama/hits/set"
+    );
+
+    mqttClient.subscribe(
+        "baseball/teama/errors/set"
+    );
+
+    mqttClient.subscribe(
+        "baseball/teamb/hits/set"
+    );
+
+    mqttClient.subscribe(
+        "baseball/teamb/errors/set"
+    );
+
+    for(int inning = 1;
+        inning <= 10;
+        inning++)
     {
         mqttClient.subscribe(
             (
@@ -151,12 +196,15 @@ void MqttManager::publishDiscoveryEntity(
     doc["state_topic"] = stateTopic;
     doc["command_topic"] = commandTopic;
 
+    doc["availability_topic"] =
+        "baseball/status";
+
     doc["icon"] = icon;
 
+    doc["mode"] = "box";
     doc["min"] = minValue;
     doc["max"] = maxValue;
-
-    doc["mode"] = "box";
+    doc["step"] = 1;
 
     JsonObject device =
         doc["device"].to<JsonObject>();
@@ -172,7 +220,7 @@ void MqttManager::publishDiscoveryEntity(
 
     JsonArray identifiers =
         device["identifiers"]
-        .to<JsonArray>();
+            .to<JsonArray>();
 
     identifiers.add(
         "baseball_scoreboard"
@@ -239,7 +287,9 @@ void MqttManager::publishDiscovery()
         2
     );
 
-    for(int inning=1; inning<=10; inning++)
+    for(int inning = 1;
+        inning <= 10;
+        inning++)
     {
         publishDiscoveryEntity(
             "teama_inning_" +
@@ -328,79 +378,86 @@ void MqttManager::publishState()
     auto& state =
         scoreboard.state();
 
-    mqttClient.publish(
+    auto publishNumber =
+        const char* topic,
+            int value
+        {
+            String payload(value);
+
+            mqttClient.publish(
+                topic,
+                payload.c_str(),
+                true
+            );
+        };
+
+    publishNumber(
         "baseball/state/batter",
-        String(state.batter).c_str(),
-        true
+        state.batter
     );
 
-    mqttClient.publish(
+    publishNumber(
         "baseball/state/balls",
-        String(state.balls).c_str(),
-        true
+        state.balls
     );
 
-    mqttClient.publish(
+    publishNumber(
         "baseball/state/strikes",
-        String(state.strikes).c_str(),
-        true
+        state.strikes
     );
 
-    mqttClient.publish(
+    publishNumber(
         "baseball/state/outs",
-        String(state.outs).c_str(),
-        true
+        state.outs
     );
 
-    mqttClient.publish(
+    publishNumber(
         "baseball/state/teama/hits",
-        String(state.hitsA).c_str(),
-        true
+        state.hitsA
     );
 
-    mqttClient.publish(
+    publishNumber(
         "baseball/state/teama/errors",
-        String(state.errorsA).c_str(),
-        true
+        state.errorsA
     );
 
-    mqttClient.publish(
+    publishNumber(
         "baseball/state/teamb/hits",
-        String(state.hitsB).c_str(),
-        true
+        state.hitsB
     );
 
-    mqttClient.publish(
+    publishNumber(
         "baseball/state/teamb/errors",
-        String(state.errorsB).c_str(),
-        true
+        state.errorsB
     );
 
-    for(int i=0;i<10;i++)
+    for(int i = 0; i < 10; i++)
     {
+        String topicA =
+            "baseball/state/teama/inning/" +
+            String(i + 1);
+
+        String topicB =
+            "baseball/state/teamb/inning/" +
+            String(i + 1);
+
+        String payloadA(
+            state.inningsA[i]
+        );
+
+        String payloadB(
+            state.inningsB[i]
+        );
+
         mqttClient.publish(
-            (
-                "baseball/state/teama/inning/" +
-                String(i + 1)
-            ).c_str(),
-
-            String(
-                state.inningsA[i]
-            ).c_str(),
-
+            topicA.c_str(),
+            payloadA.c_str(),
             true
         );
 
         mqttClient.publish(
-            (
-                "baseball/state/teamb/inning/" +
-                String(i + 1)
-            ).c_str(),
-
-            String(
-                state.inningsB[i]
-            ).c_str(),
-
+            topicB.c_str(),
+            payloadB.c_str(),
             true
         );
     }
@@ -413,7 +470,9 @@ void MqttManager::handleMessage(
 {
     String value;
 
-    for(unsigned int i=0; i<length; i++)
+    for(unsigned int i = 0;
+        i < length;
+        i++)
     {
         value +=
             (char)payload[i];
@@ -459,6 +518,105 @@ void MqttManager::handleMessage(
                 0,
                 99
             );
+    }
+    else if(t == "baseball/teama/hits/set")
+    {
+        state.hitsA =
+            constrain(
+                value.toInt(),
+                0,
+                99
+            );
+    }
+    else if(t == "baseball/teama/errors/set")
+    {
+        state.errorsA =
+            constrain(
+                value.toInt(),
+                0,
+                99
+            );
+    }
+    else if(t == "baseball/teamb/hits/set")
+    {
+        state.hitsB =
+            constrain(
+                value.toInt(),
+                0,
+                99
+            );
+    }
+    else if(t == "baseball/teamb/errors/set")
+    {
+        state.errorsB =
+            constrain(
+                value.toInt(),
+                0,
+                99
+            );
+    }
+    else if(t.startsWith(
+        "baseball/teama/inning/"))
+    {
+        int inning =
+            t.substring(
+                22,
+                t.lastIndexOf('/')
+            ).toInt();
+
+        if(inning >= 1 &&
+           inning <= 10)
+        {
+            state.inningsA[
+                inning - 1
+            ] =
+            constrain(
+                value.toInt(),
+                0,
+                99
+            );
+        }
+    }
+    else if(t.startsWith(
+        "baseball/teamb/inning/"))
+    {
+        int inning =
+            t.substring(
+                22,
+                t.lastIndexOf('/')
+            ).toInt();
+
+        if(inning >= 1 &&
+           inning <= 10)
+        {
+            state.inningsB[
+                inning - 1
+            ] =
+            constrain(
+                value.toInt(),
+                0,
+                99
+            );
+        }
+    }
+    else if(t == "baseball/cmd")
+    {
+        JsonDocument cmd;
+
+        if(deserializeJson(
+            cmd,
+            value) == DeserializationError::Ok)
+        {
+            String action =
+                cmd["action"] | "";
+
+            if(action == "resetCount")
+            {
+                state.balls = 0;
+                state.strikes = 0;
+                state.outs = 0;
+            }
+        }
     }
 
     scoreboard.render();
