@@ -1,9 +1,11 @@
 #include "WebSocketManager.h"
 
+#include <Arduino.h>
 #include <ArduinoJson.h>
 
 #include "StateSerializer.h"
 #include "ScoreboardDisplay.h"
+#include "MqttManager.h"
 
 extern ScoreboardDisplay scoreboard;
 extern MqttManager mqttManager;
@@ -33,7 +35,7 @@ void WebSocketManager::begin(
                 case WS_EVT_CONNECT:
                 {
                     Serial.printf(
-                        "[WS] Client #%u verbunden\n",
+                        "[WS] Client #%u connected\n",
                         client->id()
                     );
 
@@ -47,7 +49,17 @@ void WebSocketManager::begin(
                 case WS_EVT_DISCONNECT:
                 {
                     Serial.printf(
-                        "[WS] Client #%u getrennt\n",
+                        "[WS] Client #%u disconnected\n",
+                        client->id()
+                    );
+
+                    break;
+                }
+
+                case WS_EVT_ERROR:
+                {
+                    Serial.printf(
+                        "[WS] Client #%u error\n",
                         client->id()
                     );
 
@@ -59,25 +71,14 @@ void WebSocketManager::begin(
                     break;
                 }
 
-                case WS_EVT_ERROR:
-                {
-                    Serial.printf(
-                        "[WS] Fehler Client #%u\n",
-                        client->id()
-                    );
-
-                    break;
-                }
-
                 case WS_EVT_DATA:
                 {
                     AwsFrameInfo* info =
                         (AwsFrameInfo*)arg;
 
                     if(
-                        info->opcode == WS_TEXT &&
-                        info->final &&
-                        info->index == 0
+   *                    info->final &&*                        info->inde* == 0 &&
+                        i*fo->opcode == WS_TEXT
                     )
                     {
                         String message;
@@ -123,17 +124,18 @@ void WebSocketManager::handleMessage(
 {
     JsonDocument doc;
 
-    auto result =
+    DeserializationError error =
         deserializeJson(
             doc,
             message
         );
 
-    if(result)
+    if(error != DeserializationError::Ok)
     {
         client->text(
-            "{\"error\":\"invalid json\"}"
+            "{\"success\":false,\"error\":\"invalid json\"}"
         );
+
         return;
     }
 
@@ -144,7 +146,7 @@ void WebSocketManager::handleMessage(
     {
         state.batter =
             constrain(
-                doc["atBat"],
+                doc["atBat"].as<int>(),
                 0,
                 99
             );
@@ -154,7 +156,7 @@ void WebSocketManager::handleMessage(
     {
         state.balls =
             constrain(
-                doc["balls"],
+                doc["balls"].as<int>(),
                 0,
                 3
             );
@@ -164,7 +166,7 @@ void WebSocketManager::handleMessage(
     {
         state.strikes =
             constrain(
-                doc["strikes"],
+                doc["strikes"].as<int>(),
                 0,
                 2
             );
@@ -174,7 +176,7 @@ void WebSocketManager::handleMessage(
     {
         state.outs =
             constrain(
-                doc["outs"],
+                doc["outs"].as<int>(),
                 0,
                 2
             );
@@ -184,7 +186,7 @@ void WebSocketManager::handleMessage(
     {
         state.hitsA =
             constrain(
-                doc["hitsA"],
+                doc["hitsA"].as<int>(),
                 0,
                 99
             );
@@ -194,7 +196,7 @@ void WebSocketManager::handleMessage(
     {
         state.hitsB =
             constrain(
-                doc["hitsB"],
+                doc["hitsB"].as<int>(),
                 0,
                 99
             );
@@ -204,7 +206,7 @@ void WebSocketManager::handleMessage(
     {
         state.errorsA =
             constrain(
-                doc["errorsA"],
+                doc["errorsA"].as<int>(),
                 0,
                 99
             );
@@ -214,7 +216,7 @@ void WebSocketManager::handleMessage(
     {
         state.errorsB =
             constrain(
-                doc["errorsB"],
+                doc["errorsB"].as<int>(),
                 0,
                 99
             );
@@ -224,7 +226,7 @@ void WebSocketManager::handleMessage(
     {
         scoreboard.setCurrentInning(
             constrain(
-                doc["currentInning"],
+                doc["currentInning"].as<int>(),
                 1,
                 10
             )
@@ -233,16 +235,17 @@ void WebSocketManager::handleMessage(
 
     if(doc["inningsA"].is<JsonArray>())
     {
-        JsonArray arr =
-            doc["inningsA"];
+        JsonArray innings =
+            doc["inningsA"].as<JsonArray>();
 
-        for(uint8_t i = 0;
-            i < arr.size() && i < 10;
+        for(size_t i = 0;
+            i < innings.size() &&
+            i < 10;
             i++)
         {
             state.inningsA[i] =
                 constrain(
-                    arr[i].as<int>(),
+                    innings[i].as<int>(),
                     0,
                     99
                 );
@@ -251,16 +254,17 @@ void WebSocketManager::handleMessage(
 
     if(doc["inningsB"].is<JsonArray>())
     {
-        JsonArray arr =
-            doc["inningsB"];
+        JsonArray innings =
+            doc["inningsB"].as<JsonArray>();
 
-        for(uint8_t i = 0;
-            i < arr.size() && i < 10;
+        for(size_t i = 0;
+            i < innings.size() &&
+            i < 10;
             i++)
         {
             state.inningsB[i] =
                 constrain(
-                    arr[i].as<int>(),
+                    innings[i].as<int>(),
                     0,
                     99
                 );
@@ -270,7 +274,7 @@ void WebSocketManager::handleMessage(
     if(doc["cmd"].is<String>())
     {
         String cmd =
-            doc["cmd"];
+            doc["cmd"].as<String>();
 
         if(cmd == "resetCount")
         {
@@ -306,6 +310,12 @@ void WebSocketManager::handleMessage(
     }
 
     scoreboard.render();
-    broadcastState();
+
     mqttManager.publishState();
+
+    broadcastState();
+
+    client->text(
+        "{\"success\":true}"
+    );
 }
