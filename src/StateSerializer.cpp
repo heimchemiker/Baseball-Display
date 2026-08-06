@@ -1,16 +1,21 @@
 #include "StateSerializer.h"
 
+#include <Arduino.h>
 #include <ArduinoJson.h>
-#include <WiFi.h>
+
 #include "ScoreboardDisplay.h"
 #include "ConfigManager.h"
 #include "MqttManager.h"
+#include "WifiManager.h"
+#include "TimeManager.h"
 #include "BrightnessManager.h"
 
-extern BrightnessManager brightnessManager;
 extern ScoreboardDisplay scoreboard;
 extern ConfigManager configManager;
 extern MqttManager mqttManager;
+extern WifiManager wifiManager;
+extern TimeManager timeManager;
+extern BrightnessManager brightnessManager;
 
 String getStateJson()
 {
@@ -20,7 +25,7 @@ String getStateJson()
         scoreboard.state();
 
     //
-    // Allgemein
+    // Spielstand
     //
 
     doc["atBat"] =
@@ -40,9 +45,12 @@ String getStateJson()
     //
 
     JsonArray inningsA =
-        doc["inningsA"].to<JsonArray>();
+        doc["inningsA"]
+            .to<JsonArray>();
 
-    for(uint8_t i = 0; i < 10; i++)
+    for(uint8_t i = 0;
+        i < 10;
+        i++)
     {
         inningsA.add(
             state.inningsA[i]
@@ -63,9 +71,12 @@ String getStateJson()
     //
 
     JsonArray inningsB =
-        doc["inningsB"].to<JsonArray>();
+        doc["inningsB"]
+            .to<JsonArray>();
 
-    for(uint8_t i = 0; i < 10; i++)
+    for(uint8_t i = 0;
+        i < 10;
+        i++)
     {
         inningsB.add(
             state.inningsB[i]
@@ -88,11 +99,18 @@ String getStateJson()
     doc["currentInning"] =
         scoreboard.getCurrentInning();
 
+    //
+    // Uhrzeit
+    //
+
     doc["hour"] =
-        scoreboard.getHour();
+        timeManager.hour();
 
     doc["minute"] =
-        scoreboard.getMinute();
+        timeManager.minute();
+
+    doc["rtcAvailable"] =
+        timeManager.rtcAvailable();
 
     //
     // Theme
@@ -106,7 +124,8 @@ String getStateJson()
     //
 
     JsonObject colors =
-        doc["colors"].to<JsonObject>();
+        doc["colors"]
+            .to<JsonObject>();
 
     colors["global"] =
         configManager.config().colorGlobal;
@@ -130,33 +149,36 @@ String getStateJson()
         configManager.config().colorOuts;
 
     colors["currentInning"] =
-        configManager.config().highlightCurrentInning;
+        configManager.config()
+            .highlightCurrentInning;
 
     //
     // WLAN
     //
 
     JsonObject wifi =
-        doc["wifi"].to<JsonObject>();
+        doc["wifi"]
+            .to<JsonObject>();
 
     wifi["connected"] =
-        (WiFi.status() == WL_CONNECTED);
+        wifiManager.connected();
 
     wifi["ssid"] =
-        WiFi.SSID();
+        wifiManager.ssid();
 
     wifi["ip"] =
-        WiFi.localIP().toString();
+        wifiManager.ipAddress();
 
     wifi["rssi"] =
-        WiFi.RSSI();
+        wifiManager.rssi();
 
     //
     // MQTT
     //
 
     JsonObject mqtt =
-        doc["mqtt"].to<JsonObject>();
+        doc["mqtt"]
+            .to<JsonObject>();
 
     mqtt["connected"] =
         mqttManager.connected();
@@ -174,39 +196,43 @@ String getStateJson()
 
     brightness["lux"] =
         brightnessManager.currentLux();
-    
+
     brightness["value"] =
         brightnessManager.currentBrightness();
 
     //
-    // Zeitquelle
+    // Zeitkonfiguration
     //
 
-    JsonObject time =
-        doc["time"].to<JsonObject>();
+    JsonObject timeConfig =
+        doc["time"]
+            .to<JsonObject>();
 
-    time["source"] =
+    timeConfig["ntpEnabled"] =
         configManager.config()
-            .ntpEnabled
-                ? "ntp"
-                : "manual";
+            .ntpEnabled;
 
-    time["ntpServer"] =
+    timeConfig["ntpServer"] =
         configManager.config()
             .ntpServer;
 
     //
-    // Speicherstatus
+    // System
     //
 
     JsonObject system =
-        doc["system"].to<JsonObject>();
+        doc["system"]
+            .to<JsonObject>();
 
     system["freeHeap"] =
         ESP.getFreeHeap();
 
     system["uptime"] =
         millis();
+
+    //
+    // JSON erzeugen
+    //
 
     String json;
 
