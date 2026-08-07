@@ -27,6 +27,8 @@ private:
 
     void reconnect();
 
+    bool mqttEnabled = false;
+
     void publishDiscovery();
 
     void publishDiscoveryEntity(

@@ -39,6 +39,17 @@ void MqttManager::begin()
 {
     mqttInstance = this;
 
+    if(configManager.config().mqttHost.isEmpty())
+    {
+        Serial.println(
+            "MQTT deaktiviert (kein Broker konfiguriert)"
+        );
+        mqttEnabled = false;
+        return;
+    }
+
+    mqttEnabled = true;
+
     mqttClient.setServer(
         configManager.config().mqttHost.c_str(),
         configManager.config().mqttPort
@@ -56,6 +67,15 @@ bool MqttManager::connected()
 
 void MqttManager::loop()
 {
+    if(!mqttEnabled)
+    {
+        return;
+    }
+    if(WiFi.status() != WL_CONNECTED)
+    {
+        return;
+    }
+
     if(!mqttClient.connected())
     {
         reconnect();
@@ -66,6 +86,21 @@ void MqttManager::loop()
 
 void MqttManager::reconnect()
 {
+    if(!mqttEnabled)
+    {
+        return;
+    }
+
+    if(WiFi.status() != WL_CONNECTED)
+    {
+        return;
+    }
+
+    if(configManager.config().mqttHost.length() == 0)
+    {
+        return;
+    }
+
     if(mqttClient.connected())
     {
         return;

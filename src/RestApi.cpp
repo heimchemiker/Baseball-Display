@@ -18,6 +18,7 @@ extern WifiManager wifiManager;
 void RestApi::begin(
     AsyncWebServer& server)
 {
+
     //
     // GET /api/state
     //

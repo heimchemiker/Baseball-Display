@@ -125,6 +125,20 @@ void WifiManager::startSTA()
 
 void WifiManager::loop()
 {
+    if (
+        !configManager.config().staMode
+    )
+    {
+        return;
+    }
+
+    if(
+        configManager.config().wifiSSID.isEmpty()
+    )
+    {
+        return;
+    }
+    
     if(
         configManager.config().staMode &&
         WiFi.status() != WL_CONNECTED
@@ -136,6 +150,13 @@ void WifiManager::loop()
 
 void WifiManager::reconnect()
 {
+    if(
+        configManager.config().wifiSSID.isEmpty()
+    )
+    {
+        return;
+    }
+
     uint32_t now =
         millis();
 

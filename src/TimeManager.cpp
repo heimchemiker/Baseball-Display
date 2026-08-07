@@ -30,16 +30,26 @@ bool TimeManager::begin()
     }
 
     if(configManager.config().ntpEnabled &&
-        configManager.config().ntpServer.length()
+        configManager.config().ntpServer.length() > 0 &&
+        WiFi.status() == WL_CONNECTED
     ){
-    configTime(
-        3600, // UTC+1
-        3600, // Sommerzeit
-        configManager.config()
-            .ntpServer.c_str()
-    );
+        configTime(
+            3600, // UTC+1
+            3600, // Sommerzeit
+            configManager.config()
+                .ntpServer.c_str()
+        );
+        Serial.println(
+            "NTP aktiviert"
+        );
+        ntpConfigured = true;
     }
-    
+    else {
+        Serial.println(
+            "NTP deaktiviert"
+        );
+    }
+
     if(configManager.config().ntpEnabled)
     {
         updateFromNtp();
@@ -111,7 +121,10 @@ void TimeManager::update()
         return;
     }
 
-    if(configManager.config().ntpEnabled)
+    if(configManager.config().ntpEnabled &&
+        ntpConfigured &&
+        WiFi.status() == WL_CONNECTED
+    )
     {
         if(now - lastNtpSync > 300000)
         {
@@ -157,6 +170,11 @@ void TimeManager::updateFromNtp()
     struct tm timeinfo;
 
     if(!getLocalTime(&timeinfo))
+    {
+        return;
+    }
+
+    if(WiFi.status() != WL_CONNECTED)
     {
         return;
     }

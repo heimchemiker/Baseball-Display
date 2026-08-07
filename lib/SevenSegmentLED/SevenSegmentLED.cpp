@@ -1,7 +1,7 @@
 #include "SevenSegmentLED.h"
 
 constexpr uint8_t DIGIT_SEGMENTS = 7;
-constexpr uint8_t LEDS_PER_SEGMENT = 2;
+constexpr uint8_t LEDS_PER_SEGMENT = 1;
 constexpr uint8_t LEDS_PER_DIGIT =
     DIGIT_SEGMENTS *
     LEDS_PER_SEGMENT;

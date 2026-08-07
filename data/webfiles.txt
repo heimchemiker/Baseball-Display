@@ -1,0 +1,2607 @@
+===== ./config.js =====
+let currentConfig = {};
+
+async function loadConfig()
+{
+    try
+    {
+        const response =
+            await fetch("/api/config");
+
+        if(!response.ok)
+        {
+            throw new Error(
+                "Config konnte nicht geladen werden"
+            );
+        }
+
+        currentConfig =
+            await response.json();
+
+        fillForm(currentConfig);
+    }
+    catch(error)
+    {
+        console.error(error);
+
+        showStatus(
+            "Fehler beim Laden der Konfiguration",
+            true
+        );
+    }
+}
+
+function fillForm(cfg)
+{
+    setValue(
+        "wifiSSID",
+        cfg.wifiSSID
+    );
+
+    setValue(
+        "wifiPassword",
+        cfg.wifiPassword
+    );
+
+    setValue(
+        "mqttHost",
+        cfg.mqttHost
+    );
+
+    setValue(
+        "mqttPort",
+        cfg.mqttPort
+    );
+
+    setValue(
+        "mqttUser",
+        cfg.mqttUser
+    );
+
+    setValue(
+        "mqttPassword",
+        cfg.mqttPassword
+    );
+
+    setValue(
+        "ntpServer",
+        cfg.ntpServer
+    );
+
+    setValue(
+        "theme",
+        cfg.theme || "dark"
+    );
+
+    setValue(
+        "ntpEnabled",
+        String(cfg.ntpEnabled)
+    );
+
+    setValue(
+        "brightnessSensor",
+        String(cfg.brightnessSensor)
+    );
+
+    setValue(
+        "luxMin",
+        cfg.luxMin
+    );
+
+    setValue(
+        "luxMax",
+        cfg.luxMax
+    );
+
+    setValue(
+        "brightnessMin",
+        cfg.brightnessMin
+    );
+
+    setValue(
+        "brightnessMax",
+        cfg.brightnessMax
+    );
+
+    setColor(
+        "colorGlobal",
+        cfg.colorGlobal
+    );
+
+    setColor(
+        "colorTeamA",
+        cfg.colorTeamA
+    );
+
+    setColor(
+        "colorTeamB",
+        cfg.colorTeamB
+    );
+
+    setColor(
+        "colorClock",
+        cfg.colorClock
+    );
+
+    setColor(
+        "colorBalls",
+        cfg.colorBalls
+    );
+
+    setColor(
+        "colorStrikes",
+        cfg.colorStrikes
+    );
+
+    setColor(
+        "colorOuts",
+        cfg.colorOuts
+    );
+
+    setColor(
+        "highlightCurrentInning",
+        cfg.highlightCurrentInning
+    );
+
+    updateThemePreview();
+}
+
+function setValue(id, value)
+{
+    const element =
+        document.getElementById(id);
+
+    if(element)
+    {
+        element.value =
+            value ?? "";
+    }
+}
+
+function setColor(id, value)
+{
+    const element =
+        document.getElementById(id);
+
+    if(element && value)
+    {
+        element.value = value;
+    }
+}
+
+async function scanWifi()
+{
+    try
+    {
+        const response =
+            await fetch(
+                "/api/wifi/scan"
+            );
+
+        const networks =
+            await response.json();
+
+        const list =
+            document.getElementById(
+                "wifiList"
+            );
+
+        list.innerHTML = "";
+
+        networks.sort(
+            (a,b) =>
+                b.rssi - a.rssi
+        );
+
+        networks.forEach(
+            network =>
+            {
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    network.ssid;
+
+                option.text =
+                    `${network.ssid} (${network.rssi} dBm)`;
+
+                list.appendChild(
+                    option
+                );
+            });
+
+        showStatus(
+            `${networks.length} Netzwerke gefunden`
+        );
+    }
+    catch(error)
+    {
+        console.error(error);
+
+        showStatus(
+            "Fehler beim WLAN-Scan",
+            true
+        );
+    }
+}
+
+function buildConfigObject()
+{
+    return {
+
+        wifiSSID:
+            document.getElementById(
+                "wifiSSID"
+            ).value,
+
+        wifiPassword:
+            document.getElementById(
+                "wifiPassword"
+            ).value,
+
+        mqttHost:
+            document.getElementById(
+                "mqttHost"
+            ).value,
+
+        mqttPort:
+            parseInt(
+                document.getElementById(
+                    "mqttPort"
+                ).value
+            ),
+
+        mqttUser:
+            document.getElementById(
+                "mqttUser"
+            ).value,
+
+        mqttPassword:
+            document.getElementById(
+                "mqttPassword"
+            ).value,
+
+        ntpEnabled:
+            document.getElementById(
+                "ntpEnabled"
+            ).value === "true",
+
+        ntpServer:
+            document.getElementById(
+                "ntpServer"
+            ).value,
+
+        theme:
+            document.getElementById(
+                "theme"
+            ).value,
+
+        colorGlobal:
+            document.getElementById(
+                "colorGlobal"
+            ).value,
+
+        colorTeamA:
+            document.getElementById(
+                "colorTeamA"
+            ).value,
+
+        colorTeamB:
+            document.getElementById(
+                "colorTeamB"
+            ).value,
+
+        colorClock:
+            document.getElementById(
+                "colorClock"
+            ).value,
+
+        colorBalls:
+            document.getElementById(
+                "colorBalls"
+            ).value,
+
+        colorStrikes:
+            document.getElementById(
+                "colorStrikes"
+            ).value,
+
+        colorOuts:
+            document.getElementById(
+                "colorOuts"
+            ).value,
+
+        highlightCurrentInning:
+            document.getElementById(
+                "highlightCurrentInning"
+            ).value,
+
+        brightnessSensor:
+            document.getElementById(
+                "brightnessSensor"
+            ).value === "true",
+
+        luxMin:
+            parseFloat(
+                document.getElementById(
+                    "luxMin"
+                ).value
+            ),
+
+        luxMax:
+            parseFloat(
+                document.getElementById(
+                    "luxMax"
+                ).value
+            ),
+
+        brightnessMin:
+            parseInt(
+                document.getElementById(
+                    "brightnessMin"
+                ).value
+            ),
+
+        brightnessMax:
+            parseInt(
+                document.getElementById(
+                    "brightnessMax"
+                ).value
+            )
+    };
+}
+
+async function saveConfig()
+{
+    try
+    {
+        const config =
+            buildConfigObject();
+
+        const response =
+            await fetch(
+                "/api/config",
+                {
+                    method: "POST",
+                    headers:
+                    {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body:
+                        JSON.stringify(
+                            config
+                        )
+                });
+
+        if(!response.ok)
+        {
+            throw new Error();
+        }
+
+        showStatus(
+            "Konfiguration gespeichert"
+        );
+    }
+    catch(error)
+    {
+        console.error(error);
+
+        showStatus(
+            "Fehler beim Speichern",
+            true
+        );
+    }
+}
+
+async function restartDevice()
+{
+    if(
+        !confirm(
+            "ESP32 neu starten?"
+        )
+    )
+    {
+        return;
+    }
+
+    try
+    {
+        await fetch(
+            "/api/restart",
+            {
+                method:"POST"
+            }
+        );
+
+        showStatus(
+            "Neustart ausgelöst"
+        );
+    }
+    catch(error)
+    {
+        console.error(error);
+
+        showStatus(
+            "Neustart fehlgeschlagen",
+            true
+        );
+    }
+}
+
+function showStatus(
+    text,
+    isError = false
+)
+{
+    const status =
+        document.getElementById(
+            "status"
+        );
+
+    if(!status)
+    {
+        return;
+    }
+
+    status.innerText =
+        text;
+
+    status.className =
+        isError
+            ? "error"
+            : "success";
+}
+
+function updateThemePreview()
+{
+    const theme =
+        document.getElementById(
+            "theme"
+        ).value;
+
+    if(theme === "light")
+    {
+        document.body.classList.add(
+            "light-theme"
+        );
+    }
+    else
+    {
+        document.body.classList.remove(
+            "light-theme"
+        );
+    }
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () =>
+    {
+        loadConfig();
+
+        const wifiList =
+            document.getElementById(
+                "wifiList"
+            );
+
+        if(wifiList)
+        {
+            wifiList.addEventListener(
+                "change",
+                function()
+                {
+                    document
+                        .getElementById(
+                            "wifiSSID"
+                        )
+                        .value =
+                            this.value;
+                });
+        }
+
+        const theme =
+            document.getElementById(
+                "theme"
+            );
+
+        if(theme)
+        {
+            theme.addEventListener(
+                "change",
+                updateThemePreview
+            );
+        }
+
+        const form =
+            document.getElementById(
+                "configForm"
+            );
+
+        if(form)
+        {
+            form.addEventListener(
+                "submit",
+                function(event)
+                {
+                    event.preventDefault();
+
+                    saveConfig();
+                }
+            );
+        }
+    });
+
+===== ./Control.html =====
+<!DOCTYPE html>
+<html lang="de">
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+Scoreboard Steuerung
+</title>
+
+/style.css
+
+</head>
+
+<body>
+
+<h1>
+Baseball Scoreboard
+</h1>
+
+<nav>
+
+/
+Vorschau
+</a>
+
+/config.html
+Konfiguration
+</a>
+
+</nav>
+
+<div class="container">
+
+<h2>
+At Bat
+</h2>
+
+<input
+    id="batter"
+    type="number"
+    min="0"
+    max="99">
+
+<h2>
+Balls
+</h2>
+
+<div class="buttons">
+
+<button onclick="setBalls(0)">
+0
+</button>
+
+<button onclick="changeBalls(-1)">
+-
+</button>
+
+<button onclick="changeBalls(1)">
++
+</button>
+
+</div>
+
+<h2>
+Strikes
+</h2>
+
+<div class="buttons">
+
+<button onclick="setStrikes(0)">
+0
+</button>
+
+<button onclick="changeStrikes(-1)">
+-
+</button>
+
+<button onclick="changeStrikes(1)">
++
+</button>
+
+</div>
+
+<h2>
+Outs
+</h2>
+
+<div class="buttons">
+
+<button onclick="setOuts(0)">
+0
+</button>
+
+<button onclick="changeOuts(-1)">
+-
+</button>
+
+<button onclick="changeOuts(1)">
++
+</button>
+
+</div>
+
+<div id="teamA"></div>
+
+<div id="teamB"></div>
+
+</div>
+
+/app.js>
+/control.js>
+
+</body>
+</html>
+
+===== ./config.html =====
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Baseball Scoreboard - Konfiguration</title>
+
+style.css">
+
+<style>
+
+.container
+{
+    max-width:1200px;
+    margin:auto;
+}
+
+.card
+{
+    background:#222;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:10px;
+}
+
+.row
+{
+    display:flex;
+    gap:20px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+}
+
+.field
+{
+    display:flex;
+    flex-direction:column;
+    min-width:250px;
+}
+
+input,
+select,
+button
+{
+    padding:8px;
+    border-radius:5px;
+}
+
+.color-picker
+{
+    width:80px;
+    height:40px;
+}
+
+h1,h2
+{
+    color:white;
+}
+
+label
+{
+    color:white;
+}
+
+body
+{
+    background:#111;
+    color:white;
+    font-family:Arial,sans-serif;
+}
+
+button
+{
+    cursor:pointer;
+}
+
+.success
+{
+    color:#00ff00;
+}
+
+.error
+{
+    color:#ff4444;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Scoreboard Konfiguration</h1>
+
+<p>
+/Vorschau</a> |
+.html">Bedienung</a>
+</p>
+
+<form id="configForm">
+
+<div class="card">
+
+<h2>WLAN</h2>
+
+<div class="row">
+
+<div class="field">
+<label>Betriebsmodus</label>
+
+<select id="wifiMode">
+<option value="ap">Nur AP</option>
+<option value="sta">Nur WLAN</option>
+<option value="apsta">AP + WLAN</option>
+</select>
+
+</div>
+
+<div class="field">
+<label>Gefundene WLANs</label>
+
+<select id="wifiList"></select>
+
+<button type="button"
+onclick="scanWifi()">
+Scannen
+</button>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="field">
+<label>SSID</label>
+<input id="wifiSSID">
+</div>
+
+<div class="field">
+<label>Passwort</label>
+<input
+type="password"
+id="wifiPassword">
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>MQTT</h2>
+
+<div class="row">
+
+<div class="field">
+<label>Broker</label>
+<input id="mqttHost">
+</div>
+
+<div class="field">
+<label>Port</label>
+<input
+id="mqttPort"
+type="number">
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="field">
+<label>Benutzer</label>
+<input id="mqttUser">
+</div>
+
+<div class="field">
+<label>Passwort</label>
+<input
+type="password"
+id="mqttPassword">
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Zeit</h2>
+
+<div class="row">
+
+<div class="field">
+
+<label>NTP aktiv</label>
+
+<select id="ntpEnabled">
+<option value="true">Ja</option>
+<option value="false">Nein</option>
+</select>
+
+</div>
+
+<div class="field">
+
+<label>NTP Server</label>
+
+<input
+id="ntpServer">
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Anzeige</h2>
+
+<div class="row">
+
+<div class="field">
+
+<label>Theme</label>
+
+<select id="theme">
+<option value="dark">
+Dark
+</option>
+
+<option value="light">
+Light
+</option>
+
+</select>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Farben</h2>
+
+<div class="row">
+
+<div class="field">
+<label>Global</label>
+<input
+type="color"
+id="colorGlobal">
+</div>
+
+<div class="field">
+<label>Team A</label>
+<input
+type="color"
+id="colorTeamA">
+</div>
+
+<div class="field">
+<label>Team B</label>
+<input
+type="color"
+id="colorTeamB">
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="field">
+<label>Uhrzeit</label>
+<input
+type="color"
+id="colorClock">
+</div>
+
+<div class="field">
+<label>Balls</label>
+<input
+type="color"
+id="colorBalls">
+</div>
+
+<div class="field">
+<label>Strikes</label>
+<input
+type="color"
+id="colorStrikes">
+</div>
+
+<div class="field">
+<label>Outs</label>
+<input
+type="color"
+id="colorOuts">
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="field">
+<label>Aktuelles Inning</label>
+<input
+type="color"
+id="highlightCurrentInning">
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Helligkeit</h2>
+
+<div class="row">
+
+<div class="field">
+
+<label>Sensor aktiv</label>
+
+<select id="brightnessSensor">
+<option value="true">Ja</option>
+<option value="false">Nein</option>
+</select>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="field">
+<label>Minimum Lux</label>
+<input
+type="number"
+id="luxMin">
+</div>
+
+<div class="field">
+<label>Maximum Lux</label>
+<input
+type="number"
+id="luxMax">
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="field">
+<label>Minimum Helligkeit</label>
+<input
+type="number"
+min="0"
+max="255"
+id="brightnessMin">
+</div>
+
+<div class="field">
+<label>Maximum Helligkeit</label>
+<input
+type="number"
+min="0"
+max="255"
+id="brightnessMax">
+</div>
+
+</div>
+
+</div>
+
+<button type="submit">
+Speichern
+</button>
+
+<div id="status"></div>
+
+</form>
+
+</div>
+
+<script>
+
+async function loadConfig()
+{
+    const response =
+        await fetch(
+            "/api/config"
+        );
+
+    const cfg =
+        await response.json();
+
+    document.getElementById(
+        "wifiSSID"
+    ).value =
+        cfg.wifiSSID || "";
+
+    document.getElementById(
+        "wifiPassword"
+    ).value =
+        cfg.wifiPassword || "";
+
+    document.getElementById(
+        "mqttHost"
+    ).value =
+        cfg.mqttHost || "";
+
+    document.getElementById(
+        "mqttPort"
+    ).value =
+        cfg.mqttPort || 1883;
+
+    document.getElementById(
+        "mqttUser"
+    ).value =
+        cfg.mqttUser || "";
+
+    document.getElementById(
+        "mqttPassword"
+    ).value =
+        cfg.mqttPassword || "";
+
+    document.getElementById(
+        "ntpEnabled"
+    ).value =
+        String(cfg.ntpEnabled);
+
+    document.getElementById(
+        "ntpServer"
+    ).value =
+        cfg.ntpServer || "";
+
+    document.getElementById(
+        "theme"
+    ).value =
+        cfg.theme || "dark";
+
+    [
+        "colorGlobal",
+        "colorTeamA",
+        "colorTeamB",
+        "colorClock",
+        "colorBalls",
+        "colorStrikes",
+        "colorOuts",
+        "highlightCurrentInning"
+    ].forEach(id =>
+    {
+        document.getElementById(id).value =
+            cfg[id];
+    });
+
+    document.getElementById(
+        "brightnessSensor"
+    ).value =
+        String(cfg.brightnessSensor);
+
+    document.getElementById(
+        "luxMin"
+    ).value =
+        cfg.luxMin;
+
+    document.getElementById(
+        "luxMax"
+    ).value =
+        cfg.luxMax;
+
+    document.getElementById(
+        "brightnessMin"
+    ).value =
+        cfg.brightnessMin;
+
+    document.getElementById(
+        "brightnessMax"
+    ).value =
+        cfg.brightnessMax;
+}
+
+async function scanWifi()
+{
+    const response =
+        await fetch(
+            "/api/wifi/scan"
+        );
+
+    const networks =
+        await response.json();
+
+    const list =
+        document.getElementById(
+            "wifiList"
+        );
+
+    list.innerHTML = "";
+
+    networks.forEach(net =>
+    {
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value =
+            net.ssid;
+
+        option.text =
+            `${net.ssid} (${net.rssi} dBm)`;
+
+        list.appendChild(
+            option
+        );
+    });
+
+    list.onchange =
+        function()
+        {
+            document.getElementById(
+                "wifiSSID"
+            ).value =
+                this.value;
+        };
+}
+
+document
+.getElementById(
+    "configForm"
+)
+.addEventListener(
+    "submit",
+    async function(e)
+    {
+        e.preventDefault();
+
+        const config =
+        {
+            wifiSSID:
+                wifiSSID.value,
+
+            wifiPassword:
+                wifiPassword.value,
+
+            mqttHost:
+                mqttHost.value,
+
+            mqttPort:
+                parseInt(
+                    mqttPort.value
+                ),
+
+            mqttUser:
+                mqttUser.value,
+
+            mqttPassword:
+                mqttPassword.value,
+
+            ntpEnabled:
+                ntpEnabled.value === "true",
+
+            ntpServer:
+                ntpServer.value,
+
+            theme:
+                theme.value,
+
+            colorGlobal:
+                colorGlobal.value,
+
+            colorTeamA:
+                colorTeamA.value,
+
+            colorTeamB:
+                colorTeamB.value,
+
+            colorClock:
+                colorClock.value,
+
+            colorBalls:
+                colorBalls.value,
+
+            colorStrikes:
+                colorStrikes.value,
+
+            colorOuts:
+                colorOuts.value,
+
+            highlightCurrentInning:
+                highlightCurrentInning.value,
+
+            brightnessSensor:
+                brightnessSensor.value === "true",
+
+            luxMin:
+                parseFloat(
+                    luxMin.value
+                ),
+
+            luxMax:
+                parseFloat(
+                    luxMax.value
+                ),
+
+            brightnessMin:
+                parseInt(
+                    brightnessMin.value
+                ),
+
+            brightnessMax:
+                parseInt(
+                    brightnessMax.value
+                )
+        };
+
+        const response =
+            await fetch(
+                "/api/config",
+                {
+                    method:"POST",
+                    headers:
+                    {
+                        "Content-Type":
+                        "application/json"
+                    },
+                    body:
+                    JSON.stringify(
+                        config
+                    )
+                });
+
+        const status =
+            document.getElementById(
+                "status"
+            );
+
+        if(response.ok)
+        {
+            status.className =
+                "success";
+
+            status.innerText =
+                "Konfiguration gespeichert";
+        }
+        else
+        {
+            status.className =
+                "error";
+
+            status.innerText =
+                "Fehler beim Speichern";
+        }
+    });
+
+loadConfig();
+
+</script>
+/config.js
+</body>
+</html>
+===== ./Control.js =====
+function apiUpdate(data)
+{
+    fetch(
+        "/api/state",
+        {
+            method:"POST",
+            headers:
+            {
+                "Content-Type":
+                "application/json"
+            },
+            body:
+                JSON.stringify(
+                    data
+                )
+        });
+}
+
+function applyTheme(theme)
+{
+    const root =
+        document.documentElement;
+
+    if(theme === "light")
+    {
+        root.style.setProperty(
+            "--bg-color",
+            "#f4f4f4"
+        );
+
+        root.style.setProperty(
+            "--panel-color",
+            "#ffffff"
+        );
+
+        root.style.setProperty(
+            "--text-color",
+            "#111111"
+        );
+
+        root.style.setProperty(
+            "--segment-off",
+            "#dddddd"
+        );
+    }
+    else
+    {
+        root.style.setProperty(
+            "--bg-color",
+            "#111111"
+        );
+
+        root.style.setProperty(
+            "--panel-color",
+            "#000000"
+        );
+
+        root.style.setProperty(
+            "--text-color",
+            "#ffffff"
+        );
+
+        root.style.setProperty(
+            "--segment-off",
+            "#220000"
+        );
+    }
+}
+
+function setBalls(value)
+{
+    apiUpdate({
+        balls:value
+    });
+}
+
+function changeBalls(delta)
+{
+    apiUpdate({
+        balls:
+            Math.max(
+                0,
+                Math.min(
+                    3,
+                    currentState.balls + delta
+                )
+            )
+    });
+}
+
+function setStrikes(value)
+{
+    apiUpdate({
+        strikes:value
+    });
+}
+
+function changeStrikes(delta)
+{
+    apiUpdate({
+        strikes:
+            Math.max(
+                0,
+                Math.min(
+                    2,
+                    currentState.strikes + delta
+                )
+            )
+    });
+}
+
+function setOuts(value)
+{
+    apiUpdate({
+        outs:value
+    });
+}
+
+function changeOuts(delta)
+{
+    apiUpdate({
+        outs:
+            Math.max(
+                0,
+                Math.min(
+                    2,
+                    currentState.outs + delta
+                )
+            )
+    });
+}
+
+function createInningControls(
+    containerId,
+    team
+)
+{
+    const div =
+        document.getElementById(
+            containerId
+        );
+
+    let html =
+        `<h2>${team}</h2>`;
+
+    for(let inning=0;
+        inning<10;
+        inning++)
+    {
+        html += `
+        <div class="inningBlock">
+
+            <button
+                onclick="
+                  updateInning(
+                    '${team}',
+                    ${inning},
+                    1
+                  )">
+                +
+            </button>
+
+            <input
+              id="${team}_${inning}"
+              readonly>
+
+            <button
+                onclick="
+                  updateInning(
+                    '${team}',
+                    ${inning},
+                    -1
+                  )">
+                -
+            </button>
+
+        </div>
+        `;
+    }
+
+    html += `
+    <div class="stats">
+
+    H
+    <button onclick="
+      updateStat(
+      '${team}',
+      'hits',
+      -1)">
+      -
+    </button>
+
+    <button onclick="
+      updateStat(
+      '${team}',
+      'hits',
+      1)">
+      +
+    </button>
+
+    E
+    <button onclick="
+      updateStat(
+      '${team}',
+      'errors',
+      -1)">
+      -
+    </button>
+
+    <button onclick="
+      updateStat(
+      '${team}',
+      'errors',
+      1)">
+      +
+    </button>
+
+    </div>
+    `;
+
+    div.innerHTML = html;
+}
+
+function updateInning(
+    team,
+    inning,
+    delta)
+{
+    const values =
+        team === "A"
+        ? currentState.inningsA
+        : currentState.inningsB;
+
+    let newVal =
+        values[inning] + delta;
+
+    if(newVal < 0)
+        newVal = 0;
+
+    if(newVal > 99)
+        newVal = 99;
+
+    apiUpdate({
+        team:team,
+        inning:inning,
+        value:newVal
+    });
+}
+
+function updateStat(
+    team,
+    stat,
+    delta)
+{
+    apiUpdate({
+        team:team,
+        stat:stat,
+        delta:delta
+    });
+}
+
+function updateControls()
+{
+    if(!currentState)
+        return;
+
+    for(let i=0;i<10;i++)
+    {
+        const a =
+            document.getElementById(
+                `A_${i}`
+            );
+
+        if(a)
+        {
+            a.value =
+                currentState
+                .inningsA[i];
+        }
+
+        const b =
+            document.getElementById(
+                `B_${i}`
+            );
+
+        if(b)
+        {
+            b.value =
+                currentState
+                .inningsB[i];
+        }
+    }
+
+    document
+        .getElementById(
+            "batter"
+        )
+        .value =
+            currentState.atBat;
+}
+===== ./style.css =====
+:root
+{
+    --bg-color: #111111;
+    --panel-color: #1e1e1e;
+    --panel-border: #333333;
+
+    --text-color: #ffffff;
+
+    --accent-color: #2196f3;
+
+    --success-color: #00c853;
+    --error-color: #ff5252;
+
+    --input-bg: #2a2a2a;
+
+    --button-bg: #2196f3;
+    --button-hover: #1976d2;
+
+    --card-shadow:
+        0 2px 10px rgba(0,0,0,.4);
+}
+
+/*
+ * Light Theme
+ */
+
+body.light-theme
+{
+    --bg-color: #f4f4f4;
+    --panel-color: #ffffff;
+    --panel-border: #d0d0d0;
+
+    --text-color: #111111;
+
+    --input-bg: #ffffff;
+
+    --button-bg: #1976d2;
+    --button-hover: #1565c0;
+
+    --card-shadow:
+        0 2px 10px rgba(0,0,0,.1);
+}
+
+/*
+ * Basis
+ */
+
+*
+{
+    box-sizing: border-box;
+}
+
+html
+{
+    margin: 0;
+    padding: 0;
+}
+
+body
+{
+    margin: 0;
+    padding: 20px;
+
+    background: var(--bg-color);
+    color: var(--text-color);
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    transition:
+        background .25s,
+        color .25s;
+}
+
+/*
+ * Überschriften
+ */
+
+h1
+{
+    margin-top: 0;
+    margin-bottom: 20px;
+
+    text-align: center;
+}
+
+h2
+{
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+/*
+ * Navigation
+ */
+
+nav
+{
+    margin-bottom: 20px;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+nav a
+{
+    color: var(--text-color);
+
+    text-decoration: none;
+
+    padding: 8px 14px;
+
+    border-radius: 6px;
+
+    background: var(--panel-color);
+
+    border: 1px solid var(--panel-border);
+}
+
+nav a:hover
+{
+    background: var(--button-bg);
+    color: white;
+}
+
+/*
+ * Container
+ */
+
+.container
+{
+    max-width: 1400px;
+    margin: auto;
+}
+
+/*
+ * Karten
+ */
+
+.card
+{
+    background: var(--panel-color);
+
+    border:
+        1px solid
+        var(--panel-border);
+
+    border-radius: 12px;
+
+    padding: 20px;
+
+    margin-bottom: 20px;
+
+    box-shadow: var(--card-shadow);
+}
+
+/*
+ * Zeilen
+ */
+
+.row
+{
+    display: flex;
+
+    gap: 20px;
+
+    flex-wrap: wrap;
+
+    margin-bottom: 15px;
+}
+
+/*
+ * Formularfelder
+ */
+
+.field
+{
+    display: flex;
+    flex-direction: column;
+
+    min-width: 220px;
+
+    flex: 1;
+}
+
+label
+{
+    margin-bottom: 6px;
+
+    font-weight: bold;
+}
+
+/*
+ * Inputs
+ */
+
+input,
+select,
+textarea
+{
+    padding: 10px;
+
+    border-radius: 8px;
+
+    border:
+        1px solid
+        var(--panel-border);
+
+    background:
+        var(--input-bg);
+
+    color:
+        var(--text-color);
+
+    font-size: 14px;
+}
+
+input[type="number"]
+{
+    width: 100%;
+}
+
+input[type="color"]
+{
+    width: 70px;
+    height: 45px;
+
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+}
+
+/*
+ * Buttons
+ */
+
+button
+{
+    border: none;
+
+    border-radius: 8px;
+
+    background:
+        var(--button-bg);
+
+    color: white;
+
+    padding:
+        10px 16px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    transition:
+        background .2s;
+}
+
+button:hover
+{
+    background:
+        var(--button-hover);
+}
+
+button.danger
+{
+    background:
+        var(--error-color);
+}
+
+button.success
+{
+    background:
+        var(--success-color);
+}
+
+/*
+ * Statusmeldungen
+ */
+
+#status
+{
+    margin-top: 15px;
+
+    font-weight: bold;
+}
+
+.success
+{
+    color:
+        var(--success-color);
+}
+
+.error
+{
+    color:
+        var(--error-color);
+}
+
+/*
+ * SVG Scoreboard
+ */
+
+svg
+{
+    width: 100%;
+
+    height: auto;
+
+    border-radius: 12px;
+
+    background: black;
+
+    border:
+        2px solid
+        var(--panel-border);
+}
+
+/*
+ * Verbindungssymbol
+ */
+
+.connection-status
+{
+    display: inline-block;
+
+    width: 12px;
+    height: 12px;
+
+    border-radius: 50%;
+
+    margin-right: 8px;
+}
+
+.connection-online
+{
+    background:
+        var(--success-color);
+}
+
+.connection-offline
+{
+    background:
+        var(--error-color);
+}
+
+/*
+ * Inning Eingabe
+ */
+
+.inningBlock
+{
+    display: inline-flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    padding: 8px;
+
+    margin: 4px;
+
+    border-radius: 8px;
+
+    background:
+        var(--panel-color);
+
+    border:
+        1px solid
+        var(--panel-border);
+}
+
+.inningBlock input
+{
+    width: 60px;
+
+    text-align: center;
+
+    margin: 5px 0;
+}
+
+/*
+ * Statistikblöcke
+ */
+
+.stats
+{
+    margin-top: 15px;
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 15px;
+
+    align-items: center;
+}
+
+/*
+ * Plus Minus Buttons
+ */
+
+.buttons
+{
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 20px;
+}
+
+.buttons button
+{
+    min-width: 55px;
+    min-height: 45px;
+
+    font-weight: bold;
+}
+
+/*
+ * Dashboard Karten
+ */
+
+.dashboard-grid
+{
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(300px,1fr));
+
+    gap: 20px;
+}
+
+/*
+ * Tabellen
+ */
+
+table
+{
+    width: 100%;
+
+    border-collapse: collapse;
+}
+
+table th,
+table td
+{
+    border:
+        1px solid
+        var(--panel-border);
+
+    padding: 8px;
+}
+
+table th
+{
+    background:
+        var(--panel-color);
+}
+
+/*
+ * Scrollbarer Bereich
+ */
+
+.scroll-x
+{
+    overflow-x: auto;
+}
+
+/*
+ * Responsive
+ */
+
+@media (max-width: 900px)
+{
+    body
+    {
+        padding: 10px;
+    }
+
+    .row
+    {
+        flex-direction: column;
+    }
+
+    .field
+    {
+        min-width: unset;
+    }
+
+    button
+    {
+        width: 100%;
+    }
+
+    .buttons
+    {
+        flex-direction: column;
+    }
+
+    .inningBlock
+    {
+        width: 80px;
+    }
+}
+
+@media (max-width: 600px)
+{
+    h1
+    {
+        font-size: 22px;
+    }
+
+    h2
+    {
+        font-size: 18px;
+    }
+
+    input,
+    select,
+    button
+    {
+        font-size: 16px;
+    }
+}
+===== ./index.html =====
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Baseball Scoreboard</title>
+
+/style.css
+
+<style>
+:root
+{
+    --bg-color:#111111;
+    --panel-color:#000000;
+    --text-color:#ffffff;
+    --segment-off:#220000;
+    --segment-border:#333333;    
+}
+body
+{
+    background:var(--bg-color);
+    color:var(--text-color);
+    font-family:Arial,sans-serif;
+}
+
+svg
+{
+    width:100%;
+    height:auto;
+    background:var(--panel-color);
+    border-radius:10px;
+}
+
+.off
+{
+    fill:#220000;
+}
+
+.segment
+{
+    transition:fill .2s;
+}
+
+.menu
+{
+    margin-bottom:20px;
+}
+
+.menu a
+{
+    margin-right:20px;
+    color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="menu">
+    /control.htmlSteuerung</a>
+    /config.htmlKonfiguration</a>
+</div>
+
+<svg id="board"
+     viewBox="0 0 2200 800">
+
+</svg>
+
+<script>
+
+const svg =
+    document.getElementById("board");
+
+function segment(
+    x,
+    y,
+    width,
+    height,
+    id
+)
+{
+    return `
+    <rect
+        id="${id}"
+        class="segment off"
+        x="${x}"
+        y="${y}"
+        width="${width}"
+        height="${height}"
+        rx="4"
+    />
+    `;
+}
+
+function createDigit(
+    x,
+    y,
+    scale,
+    prefix
+)
+{
+    let s = scale;
+
+    return `
+
+${segment(x+10*s,y+0*s,40*s,8*s,prefix+"_1")}
+${segment(x+50*s,y+10*s,8*s,40*s,prefix+"_2")}
+${segment(x+50*s,y+60*s,8*s,40*s,prefix+"_3")}
+${segment(x+10*s,y+100*s,40*s,8*s,prefix+"_4")}
+${segment(x+0*s,y+60*s,8*s,40*s,prefix+"_5")}
+${segment(x+10*s,y+50*s,40*s,8*s,prefix+"_6")}
+${segment(x+0*s,y+10*s,8*s,40*s,prefix+"_7")}
+
+`;
+}
+
+const digits = [];
+
+function addDigit(x,y,s,id)
+{
+    svg.insertAdjacentHTML(
+        "beforeend",
+        createDigit(x,y,s,id)
+    );
+
+    digits.push(id);
+}
+
+svg.innerHTML += `
+<text x="40" y="40" fill="white">AT BAT</text>
+`;
+
+addDigit(40,60,1.2,"bat1");
+addDigit(120,60,1.2,"bat2");
+
+svg.innerHTML += `
+<text x="320" y="40" fill="white">BALLS</text>
+`;
+
+for(let i=0;i<3;i++)
+{
+    svg.innerHTML += `
+    <circle
+       id="ball${i}"
+       cx="${340+i*30}"
+       cy="120"
+       r="10"
+       fill="#330000"
+    />
+    `;
+}
+
+svg.innerHTML += `
+<text x="450" y="40" fill="white">STRIKES</text>
+`;
+
+for(let i=0;i<2;i++)
+{
+    svg.innerHTML += `
+    <circle
+       id="strike${i}"
+       cx="${480+i*30}"
+       cy="120"
+       r="10"
+       fill="#330000"
+    />
+    `;
+}
+
+svg.innerHTML += `
+<text x="600" y="40" fill="white">
+OUTS
+</text>
+`;
+
+for(let i=0;i<2;i++)
+{
+    svg.innerHTML += `
+    <circle
+       id="out${i}"
+       cx="${620+i*30}"
+       cy="120"
+       r="10"
+       fill="#330000"
+    />
+    `;
+}
+
+svg.innerHTML += `
+<text x="760" y="40" fill="white">
+TIME
+</text>
+`;
+
+addDigit(760,60,1.2,"time1");
+addDigit(840,60,1.2,"time2");
+addDigit(940,60,1.2,"time3");
+addDigit(1020,60,1.2,"time4");
+
+function createRow(prefix,y)
+{
+    let x=160;
+
+    svg.innerHTML+=`
+    <text
+        x="20"
+        y="${y+50}"
+        fill="white"
+        font-size="28">
+        ${prefix}
+    </text>
+    `;
+
+    for(let inning=1;inning<=10;inning++)
+    {
+        addDigit(
+            x,
+            y,
+            0.9,
+            `${prefix}_i${inning}_a`
+        );
+
+        addDigit(
+            x+55,
+            y,
+            0.9,
+            `${prefix}_i${inning}_b`
+        );
+
+        x += 110;
+    }
+
+    addDigit(x+20,y,0.9,`${prefix}_runs_a`);
+    addDigit(x+75,y,0.9,`${prefix}_runs_b`);
+
+    addDigit(x+180,y,0.9,`${prefix}_hits_a`);
+    addDigit(x+235,y,0.9,`${prefix}_hits_b`);
+
+    addDigit(x+340,y,0.9,`${prefix}_err_a`);
+    addDigit(x+395,y,0.9,`${prefix}_err_b`);
+}
+
+createRow("A",300);
+createRow("B",520);
+
+const digitMap =
+[
+ [1,1,1,0,1,1,1],
+ [0,0,1,0,0,0,1],
+ [0,1,1,1,1,1,0],
+ [0,1,1,1,0,1,1],
+ [1,0,1,1,0,0,1],
+ [1,1,0,1,0,1,1],
+ [1,1,0,1,1,1,1],
+ [0,1,1,0,0,0,1],
+ [1,1,1,1,1,1,1],
+ [1,1,1,1,0,1,1]
+];
+
+function drawDigit(id,digit,color)
+{
+    for(let i=1;i<=7;i++)
+    {
+        let seg =
+            document.getElementById(
+                `${id}_${i}`
+            );
+
+        if(!seg)
+            continue;
+
+        seg.style.fill =
+            digitMap[digit][i-1]
+                ? color
+                : "#220000";
+    }
+}
+
+function drawNumber(
+    prefix,
+    value,
+    digits,
+    color
+)
+{
+    value =
+        value.toString()
+             .padStart(
+                 digits,
+                 "0"
+             );
+
+    for(let i=0;i<digits;i++)
+    {
+        drawDigit(
+            prefix+(i+1),
+            parseInt(value[i]),
+            color
+        );
+    }
+}
+
+async function loadState()
+{
+    try
+    {
+        const r =
+            await fetch("/api/state");
+
+        const d =
+            await r.json();
+
+        drawNumber(
+            "bat",
+            d.atBat,
+            2,
+            d.colors?.global || "#ff0000"
+        );
+
+        let time =
+            new Date();
+
+        drawNumber(
+            "time",
+            time.getHours()*100+
+            time.getMinutes(),
+            4,
+            d.colors?.clock ||
+            "#ffffff"
+        );
+
+        for(let i=0;i<3;i++)
+        {
+            document
+            .getElementById(
+                "ball"+i
+            )
+            .setAttribute(
+                "fill",
+                i<d.balls
+                ? "#00ff00"
+                : "#330000"
+            );
+        }
+
+        for(let i=0;i<2;i++)
+        {
+            document
+            .getElementById(
+                "strike"+i
+            )
+            .setAttribute(
+                "fill",
+                i<d.strikes
+                ? "#ffff00"
+                : "#330000"
+            );
+        }
+
+        for(let i=0;i<2;i++)
+        {
+            document
+            .getElementById(
+                "out"+i
+            )
+            .setAttribute(
+                "fill",
+                i<d.outs
+                ? "#ff0000"
+                : "#330000"
+            );
+        }
+    }
+    catch(err)
+    {
+        console.log(err);
+    }
+}
+
+function updatePreview()
+{
+    if(!currentState)
+        return;
+
+    // SVG anhand currentState aktualisieren
+}
+
+loadState();
+
+setInterval(
+    loadState,
+    1000
+);
+
+</script>
+
+/app.js
+
+</body>
+</html>
+===== ./app.js =====
+let ws;
+
+let currentState = {};
+
+function connectWebSocket()
+{
+    const protocol =
+        location.protocol === "https:"
+            ? "wss:"
+            : "ws:";
+
+    ws = new WebSocket(
+        `${protocol}//${window.location.host}/ws`
+    );
+
+    ws.onopen = () =>
+    {
+        console.log("WebSocket verbunden");
+    };
+
+    ws.onclose = () =>
+    {
+        setTimeout(
+            connectWebSocket,
+            2000
+        );
+    };
+
+    ws.onmessage = event =>
+    {
+        currentState =
+            JSON.parse(
+                event.data
+            );
+
+        updatePreview();
+        updateControls();
+    };
+}
+
+connectWebSocket();
+

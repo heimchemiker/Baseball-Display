@@ -28,11 +28,11 @@ private:
 
     void updateFromNtp();
 
-private:
-
     RTC_DS3231 rtc;
 
     bool rtcPresent = false;
+
+    bool ntpConfigured = false;
 
     uint32_t lastUpdate = 0;
 

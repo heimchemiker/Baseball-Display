@@ -80,12 +80,26 @@ MqttManager mqttManager;
 
 void configureFileServer()
 {
-    server.serveStatic(
+//    server.serveStatic(
+//        "/",
+//        LittleFS,
+//        "/"
+//    ).setDefaultFile(
+//        "index.html"
+//    );
+        //
+    // Startseite definieren
+    //
+
+    server.on(
         "/",
-        LittleFS,
-        "/"
-    ).setDefaultFile(
-        "index.html"
+        HTTP_GET,
+        [](AsyncWebServerRequest *request)
+        {
+            request->redirect(
+                "/index.html"
+            );
+        }
     );
 
     server.serveStatic(
@@ -208,6 +222,15 @@ void setup()
     wifiManager.begin();
 
     //
+    // Hosts in Terminal anzeigen
+    //
+
+    Serial.print("MQTT Host: ");
+    Serial.println(configManager.config().mqttHost);
+    Serial.print("NTP Server: ");
+    Serial.println(configManager.config().ntpServer);
+
+    //
     // Display initialisieren
     //
 
@@ -238,7 +261,7 @@ void setup()
         brightnessManager.setEnabled(
             false
         );
-    
+
         brightnessManager.setFixedBrightness(
             configManager.config()
                 .fixedBrightness

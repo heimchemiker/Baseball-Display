@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Baseball Scoreboard</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+:root{--bg:#111;--card:#1e1e1e;--text:#fff;--border:#333}
+body.light-theme{--bg:#f4f4f4;--card:#fff;--text:#111;--border:#ccc}
+body{background:var(--bg);color:var(--text);font-family:Arial,sans-serif;margin:0;padding:20px}
+nav a{margin-right:10px}.panel{background:var(--card);padding:16px;border-radius:12px;margin-bottom:16px}
+table{width:100%;border-collapse:collapse}td,th{border:1px solid var(--border);padding:6px;text-align:center}
+.ind{display:inline-block;width:18px;height:18px;border-radius:50%;margin:2px;background:#333}.on{filter:brightness(1.2)}
+</style>
+</head><body>
+<nav><a href="/control.html">Steuerung</a><a href="/config.html">Konfiguration</a></nav>
+<div class='panel'><h1>Baseball Scoreboard</h1><div id='conn'>Verbinde...</div></div>
+<div class='panel'>
+<h2>Top Display</h2>
+<div>At Bat: <span id='bat'>0</span></div>
+<div>Balls: <span id='ballsDots'></span></div>
+<div>Strikes: <span id='strikesDots'></span></div>
+<div>Outs: <span id='outsDots'></span></div>
+<div>Uhrzeit: <span id='clock'>00:00</span></div>
+</div>
+<div class='panel'><table><thead><tr><th>Team</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>R</th><th>H</th><th>E</th></tr></thead><tbody><tr id='a'></tr><tr id='b'></tr></tbody></table></div>
+<script>
+let currentState={};
+function dots(count,max,color){let h='';for(let i=0;i<max;i++)h+=`<span class="ind ${i<count?'on':''}" style="background:${i<count?color:'#333'}"></span>`;return h;}
+function render(s){if(s.theme==='light')document.body.classList.add('light-theme');else document.body.classList.remove('light-theme');
+const c=s.colors||{};document.getElementById('bat').textContent=s.atBat??0;document.getElementById('clock').textContent=String(s.hour??0).padStart(2,'0')+':'+String(s.minute??0).padStart(2,'0');
+document.getElementById('ballsDots').innerHTML=dots(s.balls||0,3,c.balls||'#0f0');
+document.getElementById('strikesDots').innerHTML=dots(s.strikes||0,2,c.strikes||'#ff0');
+document.getElementById('outsDots').innerHTML=dots(s.outs||0,2,c.outs||'#f00');
+const row=(name,inn,r,h,e,color)=>'<td style="color:'+color+'">'+name+'</td>'+inn.map((v,i)=>'<td'+((i+1)==s.currentInning?' style="font-weight:bold;background:'+(c.currentInning||'#444')+'"':'')+'>'+v+'</td>').join('')+'<td>'+r+'</td><td>'+h+'</td><td>'+e+'</td>';
+document.getElementById('a').innerHTML=row('A',s.inningsA||Array(10).fill(0),s.runsA||0,s.hitsA||0,s.errorsA||0,c.teamA||'#f00');
+document.getElementById('b').innerHTML=row('B',s.inningsB||Array(10).fill(0),s.runsB||0,s.hitsB||0,s.errorsB||0,c.teamB||'#0f0');}
+function updatePreview(){render(currentState);} function updateControls(){}
+fetch('/api/state').then(r=>r.json()).then(d=>render(d));
+const proto=location.protocol==='https:'?'wss':'ws';const ws=new WebSocket(proto+'://'+location.host+'/ws');
+ws.onopen=()=>document.getElementById('conn').textContent='WebSocket verbunden';
+ws.onmessage=e=>{currentState=JSON.parse(e.data);render(currentState);};
+ws.onclose=()=>document.getElementById('conn').textContent='WebSocket getrennt';
+</script></body></html>
