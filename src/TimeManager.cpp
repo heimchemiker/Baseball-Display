@@ -1,6 +1,8 @@
 #include "TimeManager.h"
 
 #include <Wire.h>
+#include <time.h>
+#include <WiFi.h>
 
 #include "ConfigManager.h"
 #include "ScoreboardDisplay.h"
@@ -27,16 +29,12 @@ bool TimeManager::begin()
         }
     }
 
-    ntpClient =
-        new NTPClient(
-            ntpUdp,
-            configManager.config()
-                .ntpServer.c_str(),
-            0,
-            60000
-        );
-
-    ntpClient->begin();
+    configTime(
+        3600, // UTC+1
+        3600, // Sommerzeit
+        configManager.config()
+            .ntpServer.c_str()
+    );
 
     if(configManager.config().ntpEnabled)
     {
@@ -152,35 +150,30 @@ void TimeManager::updateFromRtc()
 
 void TimeManager::updateFromNtp()
 {
-    if(!ntpClient)
+    struct tm timeinfo;
+
+    if(!getLocalTime(&timeinfo))
     {
         return;
     }
 
-    ntpClient->update();
-
-    unsigned long epoch =
-        ntpClient->getEpochTime();
-
-    uint32_t offsetSeconds = 0;
-
-    /*
-     * Optional:
-     * UTC-Offset aus Config übernehmen
-     */
-
-    epoch += offsetSeconds;
-
     currentHour =
-        (epoch % 86400L) / 3600;
+        timeinfo.tm_hour;
 
     currentMinute =
-        (epoch % 3600) / 60;
+        timeinfo.tm_min;
 
     if(rtcPresent)
     {
         rtc.adjust(
-            DateTime(epoch)
+            DateTime(
+                timeinfo.tm_year + 1900,
+                timeinfo.tm_mon + 1,
+                timeinfo.tm_mday,
+                timeinfo.tm_hour,
+                timeinfo.tm_min,
+                timeinfo.tm_sec
+            )
         );
     }
 }
