@@ -246,8 +246,8 @@ String WifiManager::scanNetworksJson()
         network["encryption"] =
             WiFi.encryptionType(i);
 
-        network["hidden"] =
-            WiFi.isHidden(i);
+        //network["hidden"] =
+        //    WiFi.isHidden(i);
     }
 
     String json;

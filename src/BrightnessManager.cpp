@@ -15,9 +15,25 @@ void BrightnessManager::begin()
 {
     Wire.begin();
 
+    sensorAvailable =
     sensor.begin(
         BH1750::CONTINUOUS_HIGH_RES_MODE
     );
+
+    if(sensorAvailable)
+    {
+        Serial.println(
+            "BH1750 erkannt"
+        );
+    }
+    else
+    {
+        Serial.println(
+            "BH1750 nicht vorhanden, feste Helligkeit aktiv"
+        );
+
+        sensorEnabled = false;
+    }
 
     brightness = 64;
 
@@ -40,9 +56,37 @@ void BrightnessManager::setEnabled(
     sensorEnabled = enabled;
 }
 
+bool BrightnessManager::available() const
+{
+    return sensorAvailable;
+
+}
+
 bool BrightnessManager::enabled() const
 {
     return sensorEnabled;
+}
+
+void BrightnessManager::setFixedBrightness(
+    uint8_t value)
+{
+    brightness = value;
+
+    top->setBrightness(
+        brightness
+    );
+
+    teamA->setBrightness(
+        brightness
+    );
+
+    teamB->setBrightness(
+        brightness
+    );
+
+    top->show();
+    teamA->show();
+    teamB->show();
 }
 
 void BrightnessManager::setBrightnessRange(
@@ -100,6 +144,11 @@ uint8_t BrightnessManager::calculateBrightness(
 
 void BrightnessManager::update()
 {
+    if(!sensorAvailable)
+    {
+        return;
+    }
+    
     if(!sensorEnabled)
     {
         return;

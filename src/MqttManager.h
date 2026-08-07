@@ -13,7 +13,7 @@ public:
 
     void loop();
 
-    bool connected() const;
+    bool connected();
 
     void publishState();
     

@@ -49,7 +49,7 @@ void MqttManager::begin()
     );
 }
 
-bool MqttManager::connected() const
+bool MqttManager::connected()
 {
     return mqttClient.connected();
 }
@@ -379,17 +379,16 @@ void MqttManager::publishState()
         scoreboard.state();
 
     auto publishNumber =
-        const char* topic,
-            int value
-        {
-            String payload(value);
+        [this](const char *topic, int value)
+    {
+        String payload(value);
 
-            mqttClient.publish(
-                topic,
-                payload.c_str(),
-                true
-            );
-        };
+        mqttClient.publish(
+            topic,
+            payload.c_str(),
+            true
+        );
+    };
 
     publishNumber(
         "baseball/state/batter",

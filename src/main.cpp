@@ -151,8 +151,8 @@ void initializeScoreboard()
     state.inningsA[2] = 1;
     state.inningsA[3] = 3;
     state.inningsA[4] = 0;
-    state.inningsA[5] = 2;
-    state.inningsA[6] = 1;
+    state.inningsA[5] = 0;
+    state.inningsA[6] = 0;
     state.inningsA[7] = 0;
     state.inningsA[8] = 0;
     state.inningsA[9] = 0;
@@ -163,9 +163,9 @@ void initializeScoreboard()
     state.inningsB[3] = 0;
     state.inningsB[4] = 2;
     state.inningsB[5] = 0;
-    state.inningsB[6] = 3;
+    state.inningsB[6] = 0;
     state.inningsB[7] = 0;
-    state.inningsB[8] = 1;
+    state.inningsB[8] = 0;
     state.inningsB[9] = 0;
 
     state.hitsA   = 12;
@@ -218,6 +218,32 @@ void setup()
     //
 
     brightnessManager.begin();
+
+    if(!brightnessManager.available())
+    {
+        brightnessManager.setFixedBrightness(
+            configManager.config().fixedBrightness
+        );
+    }
+
+    if(brightnessManager.available())
+    {
+        brightnessManager.setEnabled(
+            configManager.config()
+                .brightnessSensor
+        );
+    }
+    else
+    {
+        brightnessManager.setEnabled(
+            false
+        );
+    
+        brightnessManager.setFixedBrightness(
+            configManager.config()
+                .fixedBrightness
+        );
+    }
 
     brightnessManager.setEnabled(
         configManager.config()

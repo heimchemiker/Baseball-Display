@@ -25,15 +25,16 @@ void RestApi::begin(
     server.on(
         "/api/state",
         HTTP_GET,
-        AsyncWebServerRequest* request
+       [](AsyncWebServerRequest *request)
         {
             request->send(
                 200,
                 "application/json",
                 getStateJson()
-            );
+           );
         }
     );
+
 
     //
     // POST /api/state
@@ -42,19 +43,19 @@ void RestApi::begin(
     server.on(
         "/api/state",
         HTTP_POST,
-
-        AsyncWebServerRequest* request
+        [](AsyncWebServerRequest *request)
         {
         },
 
         nullptr,
 
-        AsyncWebServerRequest* request,
-           uint8_t* data,
+        [](AsyncWebServerRequest *request,
+           uint8_t *data,
            size_t len,
            size_t index,
-           size_t total
+           size_t total)
         {
+
             JsonDocument doc;
 
             DeserializationError error =
@@ -247,7 +248,7 @@ void RestApi::begin(
     server.on(
         "/api/config",
         HTTP_GET,
-        AsyncWebServerRequest* request
+        [](AsyncWebServerRequest *request)
         {
             request->send(
                 200,
@@ -265,17 +266,17 @@ void RestApi::begin(
         "/api/config",
         HTTP_POST,
 
-        AsyncWebServerRequest* request
+        [](AsyncWebServerRequest *request)
         {
         },
 
         nullptr,
 
-        AsyncWebServerRequest* request,
-           uint8_t* data,
+        [](AsyncWebServerRequest *request,
+           uint8_t *data,
            size_t len,
            size_t index,
-           size_t total
+           size_t total)
         {
             String payload;
 
@@ -322,7 +323,7 @@ void RestApi::begin(
     server.on(
         "/api/restart",
         HTTP_POST,
-        AsyncWebServerRequest* request
+        [](AsyncWebServerRequest *request)
         {
             request->send(
                 200,
@@ -343,7 +344,7 @@ void RestApi::begin(
     server.on(
         "/api/wifi/scan",
         HTTP_GET,
-        AsyncWebServerRequest* request
+        [](AsyncWebServerRequest *request)
         {
             request->send(
                 200,

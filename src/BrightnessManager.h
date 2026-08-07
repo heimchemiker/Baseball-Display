@@ -22,11 +22,17 @@ public:
         bool enabled
     );
 
+    bool available() const;
+
     bool enabled() const;
 
     void setBrightnessRange(
         uint8_t minBrightness,
         uint8_t maxBrightness
+    );
+
+    void setFixedBrightness(
+        uint8_t value
     );
 
     void setLuxRange(
@@ -51,6 +57,8 @@ private:
     Adafruit_NeoPixel* top;
     Adafruit_NeoPixel* teamA;
     Adafruit_NeoPixel* teamB;
+
+    bool sensorAvailable = false;
 
     bool sensorEnabled = true;
 

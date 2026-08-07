@@ -29,13 +29,17 @@ bool TimeManager::begin()
         }
     }
 
+    if(configManager.config().ntpEnabled &&
+        configManager.config().ntpServer.length()
+    ){
     configTime(
         3600, // UTC+1
         3600, // Sommerzeit
         configManager.config()
             .ntpServer.c_str()
     );
-
+    }
+    
     if(configManager.config().ntpEnabled)
     {
         updateFromNtp();

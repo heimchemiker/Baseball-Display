@@ -60,6 +60,7 @@ void ConfigManager::createDefaults()
 
     cfg.brightnessMin = 5;
     cfg.brightnessMax = 255;
+    cfg.fixedBrightness = 128;
 }
 
 bool ConfigManager::load()
@@ -182,6 +183,9 @@ String ConfigManager::toJson()
     doc["brightnessMax"] =
         cfg.brightnessMax;
 
+    doc["fixedBrightness"] =
+        cfg.fixedBrightness;
+
     String json;
 
     serializeJsonPretty(
@@ -279,6 +283,9 @@ bool ConfigManager::fromJson(
 
     cfg.brightnessMax =
         doc["brightnessMax"] | 255;
+
+    cfg.fixedBrightness =
+        doc["fixedBrightness"] | 128;
 
     return true;
 }

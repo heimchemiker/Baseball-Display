@@ -41,6 +41,7 @@ struct AppConfig
 
     uint8_t brightnessMin;
     uint8_t brightnessMax;
+    uint8_t fixedBrightness;
 };
 
 class ConfigManager

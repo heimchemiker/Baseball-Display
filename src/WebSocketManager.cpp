@@ -73,12 +73,12 @@ void WebSocketManager::begin(
 
                 case WS_EVT_DATA:
                 {
-                    AwsFrameInfo* info =
+                    AwsFrameInfo *info =
                         (AwsFrameInfo*)arg;
 
                     if(
-   *                    info->final &&*                        info->inde* == 0 &&
-                        i*fo->opcode == WS_TEXT
+                        info->final &&                        info->index == 0 &&
+                        info->opcode == WS_TEXT
                     )
                     {
                         String message;
