@@ -2,8 +2,6 @@
 
 #include <Arduino.h>
 #include <RTClib.h>
-#include <NTPClient.h>
-#include <WiFiUdp.h>
 
 class TimeManager
 {
@@ -35,10 +33,6 @@ private:
     RTC_DS3231 rtc;
 
     bool rtcPresent = false;
-
-    WiFiUDP ntpUdp;
-
-    NTPClient* ntpClient = nullptr;
 
     uint32_t lastUpdate = 0;
 
