@@ -6,6 +6,20 @@ constexpr uint8_t LEDS_PER_DIGIT =
     DIGIT_SEGMENTS *
     LEDS_PER_SEGMENT;
 
+/*
+Seven-Segment LED digit segment mapping:
+
+      1
+     ---
+  0 |   | 2
+    | 6 |
+     ---
+  5 |   | 3
+    |   |
+     ---
+      4
+*/
+
 static const bool digitMap[10][7] =
 {
     {1,1,1,1,1,1,0},        //0
