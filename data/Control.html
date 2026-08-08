@@ -1,115 +1,359 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-
-<meta charset="UTF-8">
-
-<title>
-Scoreboard Steuerung
-</title>
-
-/style.css
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scoreboard Steuerung</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+  <nav>
+    <a href="index.html">Vorschau</a>
+    <a href="config.html">Konfiguration</a>
+  </nav>
 
-<h1>
-Baseball Scoreboard
-</h1>
+  <div class="container">
+    <h1>Baseball Scoreboard - Steuerung</h1>
 
-<nav>
+    <section class="card">
+      <h2>Uhrzeit (anzeige)</h2>
+      <div id="timeDisplay">--:--</div>
+    </section>
 
-/
-Vorschau
-</a>
+    <section class="card">
+      <h2>At Bat</h2>
+      <div class="row">
+        <div class="field">
+          <label for="atBatInput">At Bat</label>
+          <input id="atBatInput" type="number" min="0" max="99">
+        </div>
+      </div>
+    </section>
 
-/config.html
-Konfiguration
-</a>
+    <section class="card">
+      <h2>Count</h2>
+      <div class="row">
+        <div class="field control-with-buttons">
+          <label>Balls</label>
+          <button class="plus" onclick="changeCount('balls',1)">+</button>
+          <input id="ballsInput" type="number" min="0" max="3">
+          <button class="minus" onclick="changeCount('balls',-1)">-</button>
+        </div>
 
-</nav>
+        <div class="field control-with-buttons">
+          <label>Strikes</label>
+          <button class="plus" onclick="changeCount('strikes',1)">+</button>
+          <input id="strikesInput" type="number" min="0" max="2">
+          <button class="minus" onclick="changeCount('strikes',-1)">-</button>
+        </div>
 
-<div class="container">
+        <div class="field control-with-buttons">
+          <label>Outs</label>
+          <button class="plus" onclick="changeCount('outs',1)">+</button>
+          <input id="outsInput" type="number" min="0" max="2">
+          <button class="minus" onclick="changeCount('outs',-1)">-</button>
+        </div>
+      </div>
+    </section>
 
-<h2>
-At Bat
-</h2>
+    <section class="card">
+      <h2>Team A - Innings (Runs)</h2>
+      <div id="teamAInnings" class="row"></div>
+      <div><strong>Gesamt Runs A:</strong> <span id="runsATotal">0</span></div>
 
-<input
-    id="batter"
-    type="number"
-    min="0"
-    max="99">
+      <h3>Hits / Errors</h3>
+      <div class="row">
+        <div class="field control-with-buttons">
+          <label>Hits A</label>
+          <button class="plus" onclick="changeSimple('hitsA',1)">+</button>
+          <input id="hitsA" type="number" min="0" max="99">
+          <button class="minus" onclick="changeSimple('hitsA',-1)">-</button>
+        </div>
 
-<h2>
-Balls
-</h2>
+        <div class="field control-with-buttons">
+          <label>Errors A</label>
+          <button class="plus" onclick="changeSimple('errorsA',1)">+</button>
+          <input id="errorsA" type="number" min="0" max="99">
+          <button class="minus" onclick="changeSimple('errorsA',-1)">-</button>
+        </div>
+      </div>
+    </section>
 
-<div class="buttons">
+    <section class="card">
+      <h2>Team B - Innings (Runs)</h2>
+      <div id="teamBInnings" class="row"></div>
+      <div><strong>Gesamt Runs B:</strong> <span id="runsBTotal">0</span></div>
 
-<button onclick="setBalls(0)">
-0
-</button>
+      <h3>Hits / Errors</h3>
+      <div class="row">
+        <div class="field control-with-buttons">
+          <label>Hits B</label>
+          <button class="plus" onclick="changeSimple('hitsB',1)">+</button>
+          <input id="hitsB" type="number" min="0" max="99">
+          <button class="minus" onclick="changeSimple('hitsB',-1)">-</button>
+        </div>
 
-<button onclick="changeBalls(-1)">
--
-</button>
+        <div class="field control-with-buttons">
+          <label>Errors B</label>
+          <button class="plus" onclick="changeSimple('errorsB',1)">+</button>
+          <input id="errorsB" type="number" min="0" max="99">
+          <button class="minus" onclick="changeSimple('errorsB',-1)">-</button>
+        </div>
+      </div>
+    </section>
 
-<button onclick="changeBalls(1)">
-+
-</button>
+    <div class="buttons">
+      <button onclick="sendFullState()">Senden</button>
+      <button onclick="sendCmd('resetCount')">Reset Count</button>
+      <button onclick="sendCmd('clearGame')">Clear Game</button>
+    </div>
 
-</div>
+    <div id="status"></div>
+  </div>
 
-<h2>
-Strikes
-</h2>
+  <script src="app.js"></script>
+  <script>
+    // Control page logic. Relies on global `ws` and `currentState` from app.js
 
-<div class="buttons">
+    function createInningControls(containerId, team)
+    {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
 
-<button onclick="setStrikes(0)">
-0
-</button>
+      for(let i=0;i<10;i++)
+      {
+        const col = document.createElement('div');
+        col.className = 'field control-with-buttons inning-col';
 
-<button onclick="changeStrikes(-1)">
--
-</button>
+        const label = document.createElement('label');
+        label.textContent = `Inning ${i+1}`;
 
-<button onclick="changeStrikes(1)">
-+
-</button>
+        const plus = document.createElement('button');
+        plus.className = 'plus';
+        plus.textContent = '+';
+        plus.addEventListener('click', () => adjustInning(team, i, 1));
 
-</div>
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = 0;
+        input.max = 99;
+        input.id = `${team}_inning_${i}`;
+        input.addEventListener('change', () => onInningChanged(team));
 
-<h2>
-Outs
-</h2>
+        const minus = document.createElement('button');
+        minus.className = 'minus';
+        minus.textContent = '-';
+        minus.addEventListener('click', () => adjustInning(team, i, -1));
 
-<div class="buttons">
+        col.appendChild(label);
+        col.appendChild(plus);
+        col.appendChild(input);
+        col.appendChild(minus);
 
-<button onclick="setOuts(0)">
-0
-</button>
+        container.appendChild(col);
+      }
+    }
 
-<button onclick="changeOuts(-1)">
--
-</button>
+    function adjustInning(team, index, delta)
+    {
+      const id = `${team}_inning_${index}`;
+      const el = document.getElementById(id);
+      let v = parseInt(el.value) || 0;
+      v = Math.max(0, v + delta);
+      el.value = v;
+      updateRunsTotals();
+      sendInnings();
+    }
 
-<button onclick="changeOuts(1)">
-+
-</button>
+    function onInningChanged(team)
+    {
+      updateRunsTotals();
+      sendInnings();
+    }
 
-</div>
+    function updateRunsTotals()
+    {
+      let sumA = 0;
+      let sumB = 0;
+      for(let i=0;i<10;i++)
+      {
+        sumA += parseInt(document.getElementById(`A_inning_${i}`).value) || 0;
+        sumB += parseInt(document.getElementById(`B_inning_${i}`).value) || 0;
+      }
+      document.getElementById('runsATotal').textContent = sumA;
+      document.getElementById('runsBTotal').textContent = sumB;
+    }
 
-<div id="teamA"></div>
+    function changeSimple(field, delta)
+    {
+      const el = document.getElementById(field);
+      let v = parseInt(el.value) || 0;
+      v = Math.max(0, v + delta);
+      el.value = v;
+      sendSimpleFields();
+    }
 
-<div id="teamB"></div>
+    function changeCount(field, delta)
+    {
+      const el = document.getElementById(field + 'Input');
+      let v = parseInt(el.value) || 0;
+      const limits = { balls: 3, strikes: 2, outs: 2 };
+      const max = limits[field] ?? 99;
+      v = Math.max(0, Math.min(max, v + delta));
+      el.value = v;
+      sendCounts();
+    }
 
-</div>
+    function sendIfConnected(obj)
+    {
+      if(window.ws && ws.readyState === WebSocket.OPEN)
+      {
+        ws.send(JSON.stringify(obj));
+        showStatus('Gesendet');
+      }
+      else
+      {
+        showStatus('WebSocket nicht verbunden', true);
+      }
+    }
 
-/app.js>
-/control.js>
+    function sendInnings()
+    {
+      const inningsA = [];
+      const inningsB = [];
+      for(let i=0;i<10;i++)
+      {
+        inningsA.push(parseInt(document.getElementById(`A_inning_${i}`).value) || 0);
+        inningsB.push(parseInt(document.getElementById(`B_inning_${i}`).value) || 0);
+      }
 
+      sendIfConnected({ inningsA, inningsB });
+    }
+
+    function sendSimpleFields()
+    {
+      const hitsA = parseInt(document.getElementById('hitsA').value) || 0;
+      const hitsB = parseInt(document.getElementById('hitsB').value) || 0;
+      const errorsA = parseInt(document.getElementById('errorsA').value) || 0;
+      const errorsB = parseInt(document.getElementById('errorsB').value) || 0;
+
+      sendIfConnected({ hitsA, hitsB, errorsA, errorsB });
+    }
+
+    function sendCounts()
+    {
+      const balls = parseInt(document.getElementById('ballsInput').value) || 0;
+      const strikes = parseInt(document.getElementById('strikesInput').value) || 0;
+      const outs = parseInt(document.getElementById('outsInput').value) || 0;
+
+      sendIfConnected({ balls, strikes, outs });
+    }
+
+    function sendAtBat()
+    {
+      const atBat = parseInt(document.getElementById('atBatInput').value) || 0;
+      sendIfConnected({ atBat });
+    }
+
+    function sendFullState()
+    {
+      const payload = {};
+      // innings
+      payload.inningsA = [];
+      payload.inningsB = [];
+      for(let i=0;i<10;i++)
+      {
+        payload.inningsA.push(parseInt(document.getElementById(`A_inning_${i}`).value) || 0);
+        payload.inningsB.push(parseInt(document.getElementById(`B_inning_${i}`).value) || 0);
+      }
+      payload.hitsA = parseInt(document.getElementById('hitsA').value) || 0;
+      payload.hitsB = parseInt(document.getElementById('hitsB').value) || 0;
+      payload.errorsA = parseInt(document.getElementById('errorsA').value) || 0;
+      payload.errorsB = parseInt(document.getElementById('errorsB').value) || 0;
+
+      payload.atBat = parseInt(document.getElementById('atBatInput').value) || 0;
+      payload.balls = parseInt(document.getElementById('ballsInput').value) || 0;
+      payload.strikes = parseInt(document.getElementById('strikesInput').value) || 0;
+      payload.outs = parseInt(document.getElementById('outsInput').value) || 0;
+
+      sendIfConnected(payload);
+    }
+
+    function sendCmd(cmd)
+    {
+      sendIfConnected({ cmd });
+    }
+
+    function showStatus(text, isError=false)
+    {
+      const st = document.getElementById('status');
+      st.textContent = text;
+      st.className = isError ? 'error' : 'success';
+    }
+
+    // Called from app.js when currentState is updated
+    function updateControls()
+    {
+      if(!window.currentState) return;
+      const s = window.currentState;
+
+      // time
+      if(typeof s.hour === 'number' && typeof s.minute === 'number')
+      {
+        const hh = String(s.hour).padStart(2,'0');
+        const mm = String(s.minute).padStart(2,'0');
+        document.getElementById('timeDisplay').textContent = `${hh}:${mm}`;
+      }
+
+      // counts
+      document.getElementById('ballsInput').value = s.balls ?? 0;
+      document.getElementById('strikesInput').value = s.strikes ?? 0;
+      document.getElementById('outsInput').value = s.outs ?? 0;
+
+      // atBat
+      document.getElementById('atBatInput').value = s.atBat ?? 0;
+
+      // innings
+      if(Array.isArray(s.inningsA))
+      {
+        for(let i=0;i<10;i++)
+        {
+          document.getElementById(`A_inning_${i}`).value = s.inningsA[i] ?? 0;
+        }
+      }
+      if(Array.isArray(s.inningsB))
+      {
+        for(let i=0;i<10;i++)
+        {
+          document.getElementById(`B_inning_${i}`).value = s.inningsB[i] ?? 0;
+        }
+      }
+
+      // hits/errors/runs
+      document.getElementById('hitsA').value = s.hitsA ?? 0;
+      document.getElementById('hitsB').value = s.hitsB ?? 0;
+      document.getElementById('errorsA').value = s.errorsA ?? 0;
+      document.getElementById('errorsB').value = s.errorsB ?? 0;
+
+      // totals
+      document.getElementById('runsATotal').textContent = s.runsA ?? 0;
+      document.getElementById('runsBTotal').textContent = s.runsB ?? 0;
+    }
+
+    // initialize UI
+    createInningControls('teamAInnings', 'A');
+    createInningControls('teamBInnings', 'B');
+
+    // wire simple inputs to send
+    document.getElementById('atBatInput').addEventListener('change', sendAtBat);
+    document.getElementById('hitsA').addEventListener('change', sendSimpleFields);
+    document.getElementById('hitsB').addEventListener('change', sendSimpleFields);
+    document.getElementById('errorsA').addEventListener('change', sendSimpleFields);
+    document.getElementById('errorsB').addEventListener('change', sendSimpleFields);
+    document.getElementById('ballsInput').addEventListener('change', sendCounts);
+    document.getElementById('strikesInput').addEventListener('change', sendCounts);
+    document.getElementById('outsInput').addEventListener('change', sendCounts);
+
+  </script>
 </body>
 </html>
