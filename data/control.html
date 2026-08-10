@@ -206,10 +206,21 @@
 
     function sendIfConnected(obj)
     {
-      if(window.ws && ws.readyState === WebSocket.OPEN)
+      const ws = window.ws;
+      console.log('sendIfConnected readyState:', ws ? ws.readyState : 'no socket');
+
+      if(ws && ws.readyState === WebSocket.OPEN)
       {
-        ws.send(JSON.stringify(obj));
-        showStatus('Gesendet');
+        try
+        {
+          ws.send(JSON.stringify(obj));
+          showStatus('Gesendet');
+        }
+        catch(error)
+        {
+          console.error('WebSocket send failed:', error);
+          showStatus('WebSocket senden fehlgeschlagen', true);
+        }
       }
       else
       {

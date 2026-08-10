@@ -280,3 +280,115 @@ String WifiManager::scanNetworksJson()
 
     return json;
 }
+
+// Async scan task
+static void wifiScanTask(void* pv)
+{
+    WifiManager* mgr = static_cast<WifiManager*>(pv);
+
+    if(!mgr)
+    {
+        vTaskDelete(NULL);
+        return;
+    }
+
+    mgr->setScanInProgress(true);
+    mgr->setScanAvailable(false);
+
+    int count = WiFi.scanNetworks();
+
+
+    // Build JSON array manually to avoid deprecated DynamicJsonDocument.
+    String json = "[";
+
+    for(int i = 0; i < count; i++)
+    {
+        if(i > 0) json += ",";
+
+        String ssid = WiFi.SSID(i);
+
+        json += "{\"ssid\":\"";
+
+        // Escape backslashes and quotes in SSID
+        for(size_t k = 0; k < ssid.length(); k++)
+        {
+            char c = ssid[k];
+            if(c == '"' || c == '\\')
+            {
+                json += '\\';
+                json += c;
+            }
+            else if(c == '\n')
+            {
+                json += "\\n";
+            }
+            else
+            {
+                json += c;
+            }
+        }
+
+        json += "\",\"rssi\":";
+        json += WiFi.RSSI(i);
+        json += ",\"channel\":";
+        json += WiFi.channel(i);
+        json += ",\"encryption\":";
+        json += WiFi.encryptionType(i);
+        json += "}";
+    }
+
+    json += "]";
+
+    mgr->setLastScanJson(json);
+    mgr->setScanAvailable(true);
+    mgr->setScanInProgress(false);
+
+    vTaskDelete(NULL);
+}
+
+bool WifiManager::startScanAsync()
+{
+    if(scanInProgress)
+    {
+        return false;
+    }
+
+    BaseType_t res = xTaskCreate(
+        wifiScanTask,
+        "wifiScanTask",
+        8192,
+        this,
+        1,
+        NULL
+    );
+
+    return res == pdPASS;
+}
+
+bool WifiManager::isScanAvailable() const
+{
+    return scanAvailable;
+}
+
+String WifiManager::popLastScanJson()
+{
+    String tmp = lastScanJson;
+    lastScanJson = "";
+    scanAvailable = false;
+    return tmp;
+}
+
+void WifiManager::setScanInProgress(bool v)
+{
+    scanInProgress = v;
+}
+
+void WifiManager::setScanAvailable(bool v)
+{
+    scanAvailable = v;
+}
+
+void WifiManager::setLastScanJson(const String& s)
+{
+    lastScanJson = s;
+}

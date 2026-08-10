@@ -77,10 +77,17 @@ void WebSocketManager::begin(
                         (AwsFrameInfo*)arg;
 
                     if(
-                        info->final &&                        info->index == 0 &&
+                        info->final &&
+                        info->index == 0 &&
                         info->opcode == WS_TEXT
                     )
                     {
+                        Serial.printf(
+                            "[WS] Received %u bytes from client #%u\n",
+                            (unsigned)len,
+                            client->id()
+                        );
+
                         String message;
 
                         for(size_t i = 0;
@@ -90,6 +97,12 @@ void WebSocketManager::begin(
                             message +=
                                 (char)data[i];
                         }
+
+                        Serial.printf(
+                            "[WS] Message from #%u: %s\n",
+                            client->id(),
+                            message.c_str()
+                        );
 
                         handleMessage(
                             client,

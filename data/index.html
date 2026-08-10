@@ -1,405 +1,313 @@
 <!DOCTYPE html>
 <html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Baseball Scoreboard Preview</title>
+    <style>
+      :root {
+        --bg: #050505;
+        --panel: #000;
+        --text: #ddd;
+        --red: #ff3030;
+        --off: #240000;
+      }
 
-<head>
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, sans-serif;
+      }
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+      body.light {
+        --bg: #ececec;
+        --panel: #fff;
+        --text: #222;
+        --off: #bbb;
+      }
 
-<title>Baseball Scoreboard</title>
+      nav {
+        padding: 10px;
+        background: #111;
+      }
 
-/style.css
+      nav a {
+        color: #7db7ff;
+        margin-right: 15px;
+      }
 
-<style>
-:root
-{
-    --bg-color:#111111;
-    --panel-color:#000000;
-    --text-color:#ffffff;
-    --segment-off:#220000;
-    --segment-border:#333333;    
-}
-body
-{
-    background:var(--bg-color);
-    color:var(--text-color);
-    font-family:Arial,sans-serif;
-}
+      .wrap {
+        padding: 10px;
+      }
 
-svg
-{
-    width:100%;
-    height:auto;
-    background:var(--panel-color);
-    border-radius:10px;
-}
+      .board {
+        max-width: 1600px;
+        margin: auto;
+        background: var(--panel);
+        border: 3px solid #444;
+        border-radius: 18px;
+        padding: 10px;
+      }
 
-.off
-{
-    fill:#220000;
-}
+      svg {
+        width: 100%;
+        height: auto;
+      }
 
-.segment
-{
-    transition:fill .2s;
-}
+      .lbl {
+        fill: var(--text);
+        font-size: 22px;
+        font-weight: bold;
+      }
 
-.menu
-{
-    margin-bottom:20px;
-}
+      .team {
+        font-size: 46px;
+      }
 
-.menu a
-{
-    margin-right:20px;
-    color:white;
-}
+      .digit {
+        fill: var(--red);
+        filter: drop-shadow(0 0 8px currentColor);
+      }
 
-</style>
+      .box {
+        fill: #090909;
+        stroke: #333;
+      }
 
-</head>
+      body.light .box {
+        fill: #f5f5f5;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="control.html">Steuerung</a>
+      <a href="config.html">Konfiguration</a>
+    </nav>
 
-<body>
+    <div class="wrap">
+      <div class="board">
+        <svg id="s" viewBox="0 0 1500 700"></svg>
+      </div>
+    </div>
 
-<div class="menu">
-    /control.htmlSteuerung</a>
-    /config.htmlKonfiguration</a>
-</div>
+    <script>
+      const state = {
+        atBat: 23,
+        balls: 3,
+        strikes: 2,
+        outs: 2,
+        hour: 14,
+        minute: 37,
+        runsA: 9,
+        hitsA: 12,
+        errorsA: 1,
+        runsB: 7,
+        hitsB: 11,
+        errorsB: 2,
+        currentInning: 4,
+        inningsA: [2, 0, 1, 3, 0, 2, 1, 0, 0, 0],
+        inningsB: [0, 1, 0, 0, 2, 0, 3, 0, 1, 0],
+        colors: {
+          global: '#ff3030',
+          teamA: '#ff3030',
+          teamB: '#ff3030',
+          clock: '#ff3030',
+          balls: '#ff3030',
+          strikes: '#ff3030',
+          outs: '#ff3030',
+          currentInning: '#ffffff',
+        },
+        theme: 'dark',
+      };
 
-<svg id="board"
-     viewBox="0 0 2200 800">
+      const svg = document.getElementById('s');
 
-</svg>
-
-<script>
-
-const svg =
-    document.getElementById("board");
-
-function segment(
-    x,
-    y,
-    width,
-    height,
-    id
-)
-{
-    return `
-    <rect
-        id="${id}"
-        class="segment off"
-        x="${x}"
-        y="${y}"
-        width="${width}"
-        height="${height}"
-        rx="4"
-    />
-    `;
-}
-
-function createDigit(
-    x,
-    y,
-    scale,
-    prefix
-)
-{
-    let s = scale;
-
-    return `
-
-${segment(x+10*s,y+0*s,40*s,8*s,prefix+"_1")}
-${segment(x+50*s,y+10*s,8*s,40*s,prefix+"_2")}
-${segment(x+50*s,y+60*s,8*s,40*s,prefix+"_3")}
-${segment(x+10*s,y+100*s,40*s,8*s,prefix+"_4")}
-${segment(x+0*s,y+60*s,8*s,40*s,prefix+"_5")}
-${segment(x+10*s,y+50*s,40*s,8*s,prefix+"_6")}
-${segment(x+0*s,y+10*s,8*s,40*s,prefix+"_7")}
-
-`;
-}
-
-const digits = [];
-
-function addDigit(x,y,s,id)
-{
-    svg.insertAdjacentHTML(
-        "beforeend",
-        createDigit(x,y,s,id)
-    );
-
-    digits.push(id);
-}
-
-svg.innerHTML += `
-<text x="40" y="40" fill="white">AT BAT</text>
-`;
-
-addDigit(40,60,1.2,"bat1");
-addDigit(120,60,1.2,"bat2");
-
-svg.innerHTML += `
-<text x="320" y="40" fill="white">BALLS</text>
-`;
-
-for(let i=0;i<3;i++)
-{
-    svg.innerHTML += `
-    <circle
-       id="ball${i}"
-       cx="${340+i*30}"
-       cy="120"
-       r="10"
-       fill="#330000"
-    />
-    `;
-}
-
-svg.innerHTML += `
-<text x="450" y="40" fill="white">STRIKES</text>
-`;
-
-for(let i=0;i<2;i++)
-{
-    svg.innerHTML += `
-    <circle
-       id="strike${i}"
-       cx="${480+i*30}"
-       cy="120"
-       r="10"
-       fill="#330000"
-    />
-    `;
-}
-
-svg.innerHTML += `
-<text x="600" y="40" fill="white">
-OUTS
-</text>
-`;
-
-for(let i=0;i<2;i++)
-{
-    svg.innerHTML += `
-    <circle
-       id="out${i}"
-       cx="${620+i*30}"
-       cy="120"
-       r="10"
-       fill="#330000"
-    />
-    `;
-}
-
-svg.innerHTML += `
-<text x="760" y="40" fill="white">
-TIME
-</text>
-`;
-
-addDigit(760,60,1.2,"time1");
-addDigit(840,60,1.2,"time2");
-addDigit(940,60,1.2,"time3");
-addDigit(1020,60,1.2,"time4");
-
-function createRow(prefix,y)
-{
-    let x=160;
-
-    svg.innerHTML+=`
-    <text
-        x="20"
-        y="${y+50}"
-        fill="white"
-        font-size="28">
-        ${prefix}
-    </text>
-    `;
-
-    for(let inning=1;inning<=10;inning++)
-    {
-        addDigit(
-            x,
-            y,
-            0.9,
-            `${prefix}_i${inning}_a`
+      function T(x, y, t, c = 'lbl') {
+        svg.insertAdjacentHTML(
+          'beforeend',
+          `<text x='${x}' y='${y}' class='${c}'>${t}</text>`
         );
+      }
 
-        addDigit(
-            x+55,
-            y,
-            0.9,
-            `${prefix}_i${inning}_b`
+      function B(x, y, w, h, v, color) {
+        svg.insertAdjacentHTML(
+          'beforeend',
+          `<rect class='box'
+                 x='${x}'
+                 y='${y}'
+                 width='${w}'
+                 height='${h}'
+                 rx='4'/>` +
+            `<text x='${x + w / 2}' y='${y + 58}' text-anchor='middle' font-size='56' fill='${color}' class='digit'>${String(v).padStart(2, '0')}</text>`
         );
-
-        x += 110;
-    }
-
-    addDigit(x+20,y,0.9,`${prefix}_runs_a`);
-    addDigit(x+75,y,0.9,`${prefix}_runs_b`);
-
-    addDigit(x+180,y,0.9,`${prefix}_hits_a`);
-    addDigit(x+235,y,0.9,`${prefix}_hits_b`);
-
-    addDigit(x+340,y,0.9,`${prefix}_err_a`);
-    addDigit(x+395,y,0.9,`${prefix}_err_b`);
-}
-
-createRow("A",300);
-createRow("B",520);
-
-const digitMap =
-[
- [1,1,1,0,1,1,1],
- [0,0,1,0,0,0,1],
- [0,1,1,1,1,1,0],
- [0,1,1,1,0,1,1],
- [1,0,1,1,0,0,1],
- [1,1,0,1,0,1,1],
- [1,1,0,1,1,1,1],
- [0,1,1,0,0,0,1],
- [1,1,1,1,1,1,1],
- [1,1,1,1,0,1,1]
-];
-
-function drawDigit(id,digit,color)
-{
-    for(let i=1;i<=7;i++)
-    {
-        let seg =
-            document.getElementById(
-                `${id}_${i}`
-            );
-
-        if(!seg)
-            continue;
-
-        seg.style.fill =
-            digitMap[digit][i-1]
-                ? color
-                : "#220000";
-    }
-}
-
-function drawNumber(
-    prefix,
-    value,
-    digits,
-    color
-)
-{
-    value =
-        value.toString()
-             .padStart(
-                 digits,
-                 "0"
-             );
-
-    for(let i=0;i<digits;i++)
-    {
-        drawDigit(
-            prefix+(i+1),
-            parseInt(value[i]),
-            color
+      }
+      function D(x, y, w, h, v, color) {
+        svg.insertAdjacentHTML(
+            'beforeend',
+            `<rect class='box'
+                   x='${x}'
+                   y='${y}'
+                   width='${w}'
+                   height='${h}'
+                   rx='4'/>` +
+            `<text x='${x+w/2}'
+                   y='${y+58}'
+                   text-anchor='middle'
+                   font-size='56'
+                   fill='${color}'
+                   class='digit'>
+                ${v}
+             </text>`
         );
-    }
-}
+      }
 
-async function loadState()
-{
-    try
-    {
-        const r =
-            await fetch("/api/state");
+      function render() {
+        svg.innerHTML = '';
 
-        const d =
-            await r.json();
-
-        drawNumber(
-            "bat",
-            d.atBat,
-            2,
-            d.colors?.global || "#ff0000"
-        );
-
-        let time =
-            new Date();
-
-        drawNumber(
-            "time",
-            time.getHours()*100+
-            time.getMinutes(),
-            4,
-            d.colors?.clock ||
-            "#ffffff"
-        );
-
-        for(let i=0;i<3;i++)
-        {
-            document
-            .getElementById(
-                "ball"+i
-            )
-            .setAttribute(
-                "fill",
-                i<d.balls
-                ? "#00ff00"
-                : "#330000"
-            );
+        if (state.theme === 'light') {
+          document.body.classList.add('light');
+        } else {
+          document.body.classList.remove('light');
         }
 
-        for(let i=0;i<2;i++)
-        {
-            document
-            .getElementById(
-                "strike"+i
-            )
-            .setAttribute(
-                "fill",
-                i<d.strikes
-                ? "#ffff00"
-                : "#330000"
-            );
+        svg.insertAdjacentHTML(
+          'beforeend',
+          "<rect x='5' y='5' width='1490' height='690' fill='none' stroke='#555'/>" +
+            "<line x1='20' y1='220' x2='1480' y2='220' stroke='#555'/>" +
+            "<line x1='20' y1='420' x2='1480' y2='420' stroke='#555'/>"
+        );
+
+        T(90, 65, 'AT BAT');
+        T(450, 65, 'BALLS');
+        T(680, 65, 'STRIKES');
+        T(930, 65, 'OUTS');
+        T(1250, 65, 'TIME');
+        T(50, 350, 'TEAM A', 'lbl team');
+        T(50, 550, 'TEAM B', 'lbl team');
+
+        D(100, 90, 80, 90, Math.floor(state.atBat / 10), state.colors.global);
+        D(180, 90, 80, 90, state.atBat % 10, state.colors.global);
+
+        for (let i = 0; i < 3; i++) {
+          svg.insertAdjacentHTML(
+            'beforeend',
+            `<circle cx='${445 + i * 60}' cy='135' r='16' fill='${i < state.balls ? state.colors.balls : '#330000'}'/>`
+          );
         }
 
-        for(let i=0;i<2;i++)
-        {
-            document
-            .getElementById(
-                "out"+i
-            )
-            .setAttribute(
-                "fill",
-                i<d.outs
-                ? "#ff0000"
-                : "#330000"
-            );
+        for (let i = 0; i < 2; i++) {
+          svg.insertAdjacentHTML(
+            'beforeend',
+            `<circle cx='${685 + i * 60}' cy='135' r='16' fill='${i < state.strikes ? state.colors.strikes : '#330000'}'/>`
+          );
         }
-    }
-    catch(err)
-    {
-        console.log(err);
-    }
-}
 
-function updatePreview()
-{
-    if(!currentState)
-        return;
+        for (let i = 0; i < 2; i++) {
+          svg.insertAdjacentHTML(
+            'beforeend',
+            `<circle cx='${935 + i * 60}' cy='135' r='16' fill='${i < state.outs ? state.colors.outs : '#330000'}'/>`
+          );
+        }
 
-    // SVG anhand currentState aktualisieren
-}
+        const tm = String(state.hour).padStart(2, '0') + String(state.minute).padStart(2, '0');
 
-loadState();
+        for (let i = 0; i < 4; i++) {
+          D(1140 + i * 85, 90, 80, 90, tm[i], state.colors.clock);
+        }
 
-setInterval(
-    loadState,
-    1000
-);
+        for (let i = 1; i <= 10; i++) {
+          T(300 + (i - 1) * 80, 280, i);
+        }
 
-</script>
+        T(1120, 280, 'R');
+        T(1240, 280, 'H');
+        T(1360, 280, 'E');
 
-/app.js
+        for (let i = 0; i < 10; i++) {
+          if (i + 1 === state.currentInning) {
+            svg.insertAdjacentHTML(
+              'beforeend',
+              `<rect x='${276 + i * 80}' y='286' width='78' height='88' fill='none' stroke='${state.colors.currentInning}' stroke-width='3'/>`
+            );
+          }
 
-</body>
+          B(280 + i * 80, 290, 70, 80, state.inningsA[i], state.colors.teamA);
+        }
+
+        B(1100, 290, 90, 80, state.runsA, state.colors.teamA);
+        B(1220, 290, 90, 80, state.hitsA, state.colors.teamA);
+        B(1340, 290, 90, 80, state.errorsA, state.colors.teamA);
+
+        for (let i = 0; i < 10; i++) {
+          B(280 + i * 80, 490, 70, 80, state.inningsB[i], state.colors.teamB);
+        }
+
+        B(1100, 490, 90, 80, state.runsB, state.colors.teamB);
+        B(1220, 490, 90, 80, state.hitsB, state.colors.teamB);
+        B(1340, 490, 90, 80, state.errorsB, state.colors.teamB);
+      }
+
+      async function loadConfig() {
+        try {
+          const r = await fetch('/api/config');
+          const c = await r.json();
+
+          Object.assign(state, c);
+
+          if (c.theme) {
+            state.theme = c.theme;
+          }
+
+          state.colors = {
+            global: c.colorGlobal || '#ff3030',
+            teamA: c.colorTeamA || '#ff3030',
+            teamB: c.colorTeamB || '#ff3030',
+            clock: c.colorClock || '#ff3030',
+            balls: c.colorBalls || '#ff3030',
+            strikes: c.colorStrikes || '#ff3030',
+            outs: c.colorOuts || '#ff3030',
+            currentInning: c.highlightCurrentInning || '#fff',
+          };
+
+          render();
+        } catch (e) {
+          // Ignore fetch errors while previewing.
+        }
+      }
+
+      function applyState(d) {
+        Object.assign(state, d);
+
+        if (d.hour === undefined) {
+          const n = new Date();
+          state.hour = n.getHours();
+          state.minute = n.getMinutes();
+        }
+
+        render();
+      }
+
+      loadConfig();
+      render();
+
+      try {
+        const ws = new WebSocket(
+          (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/ws'
+        );
+
+        ws.onmessage = (e) => applyState(JSON.parse(e.data));
+      } catch (e) {
+        // WebSocket unavailable in preview mode.
+      }
+
+      setInterval(() => {
+        const n = new Date();
+        state.hour = n.getHours();
+        state.minute = n.getMinutes();
+        render();
+      }, 1000);
+    </script>
+  </body>
 </html>

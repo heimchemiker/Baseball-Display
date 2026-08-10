@@ -172,13 +172,55 @@ async function scanWifi()
 {
     try
     {
-        const response =
-            await fetch(
-                "/api/wifi/scan"
-            );
+        // Start scan
+        const startResp = await fetch("/api/wifi/scan", { method: "POST" });
 
-        const networks =
-            await response.json();
+        if(!startResp.ok)
+        {
+            throw new Error("Scan start failed");
+        }
+
+        // Poll for results
+        const timeout = 10000; // 10s
+        const interval = 500;
+        let elapsed = 0;
+        let networks = null;
+
+        while(elapsed < timeout)
+        {
+            await new Promise(r => setTimeout(r, interval));
+            elapsed += interval;
+
+            const res = await fetch("/api/wifi/scan/result");
+
+            if(!res.ok) continue;
+
+            const body = await res.text();
+
+            try
+            {
+                const parsed = JSON.parse(body);
+
+                if(parsed.available === false)
+                {
+                    continue;
+                }
+
+                networks = parsed;
+                break;
+            }
+            catch(e)
+            {
+                // If body is not a JSON object with available flag, assume it's the array
+                networks = JSON.parse(body);
+                break;
+            }
+        }
+
+        if(!networks)
+        {
+            throw new Error("No scan results");
+        }
 
         const list =
             document.getElementById(
@@ -211,9 +253,7 @@ async function scanWifi()
                 );
             });
 
-        showStatus(
-            `${networks.length} Netzwerke gefunden`
-        );
+        showStatus(`${networks.length} Netzwerke gefunden`);
     }
     catch(error)
     {

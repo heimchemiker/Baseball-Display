@@ -339,19 +339,56 @@ void RestApi::begin(
     );
 
     //
-    // GET /api/wifi/scan
-    //
-
+    // POST /api/wifi/scan - start an asynchronous scan
     server.on(
         "/api/wifi/scan",
+        HTTP_POST,
+        [](AsyncWebServerRequest *request)
+        {
+            bool started = wifiManager.startScanAsync();
+
+            if(started)
+            {
+                request->send(
+                    200,
+                    "application/json",
+                    "{\"started\":true}"
+                );
+            }
+            else
+            {
+                request->send(
+                    200,
+                    "application/json",
+                    "{\"started\":false}"
+                );
+            }
+        }
+    );
+
+    // GET /api/wifi/scan/result - retrieve last scan results if available
+    server.on(
+        "/api/wifi/scan/result",
         HTTP_GET,
         [](AsyncWebServerRequest *request)
         {
-            request->send(
-                200,
-                "application/json",
-                wifiManager.scanNetworksJson()
-            );
+            if(wifiManager.isScanAvailable())
+            {
+                String json = wifiManager.popLastScanJson();
+                request->send(
+                    200,
+                    "application/json",
+                    json
+                );
+            }
+            else
+            {
+                request->send(
+                    200,
+                    "application/json",
+                    "{\"available\":false}"
+                );
+            }
         }
     );
 }
